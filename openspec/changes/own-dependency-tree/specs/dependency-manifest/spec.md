@@ -6,6 +6,17 @@
 
 ## ADDED Requirements
 
+### Requirement: Godot-referencing dependencies are vendored
+任何引用 `GodotSharp` 的第三方依赖 SHALL 以源码形式纳入 `src/` 并随 Godot 版本适配，SHALL NOT 以 NuGet 包形式依赖；由 `Godot.NET.Sdk` 提供的引擎程序集本身不在此列。
+
+#### Scenario: 依赖树中不存在第三方 Godot 绑定包
+- **WHEN** 枚举 Modot 解析出的全部包，并读取每个包内 DLL 的程序集引用
+- **THEN** 除 `GodotSharp`/`GodotSharpEditor` 之外，没有任何包的 DLL 引用 `GodotSharp`；若存在，它必须已被 vendor 进 `src/`
+
+#### Scenario: 判据不依赖包元数据
+- **WHEN** 判断某个依赖是否需要 vendor
+- **THEN** 依据是它 DLL 的程序集引用，而不是它的 nuspec —— 因为 `GDSerializer` 与 `GDLogger` 的 nuspec 都未声明 `GodotSharp`，仅看元数据会漏判
+
 ### Requirement: Only real runtime dependencies are declared
 发布包 SHALL 只声明运行时会实际加载的依赖，SHALL NOT 声明纯编译期专用的包，SHALL NOT 残留未被任何代码使用的包。
 

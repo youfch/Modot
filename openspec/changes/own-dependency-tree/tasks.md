@@ -34,12 +34,13 @@
 - [ ] 5.2 移除 `Carnagion.MoreLinq` 的全部引用（`src/GDSerializer` 与 `src/Modot`），**不以推断为准**：移除后构建，由编译器穷举缺口，缺什么补什么；验证 `dotnet build Modot.sln` 退出码为 0 且还原图与包依赖列表中不含 `Carnagion.MoreLinq`
 - [ ] 5.3 把 `JetBrains.Annotations` 由 `2022.1.0` 升到 `2026.2.0` 并加 `PrivateAssets="all"`；验证 `dotnet build` 退出码为 0，且 `[PublicAPI]`/`[UsedImplicitly]`/`[MustUseReturnValue]` 仍然解析（无 CS0246/CS0121）
 - [ ] 5.4 把 `src/GDSerializer` 与 `src/GDLogger` 注册进 `Modot.sln`（归入 `src` 解决方案文件夹）；验证 `dotnet build Modot.sln` 退出码为 0 且三个项目都在解决方案内
+- [ ] 5.5 做一次穷尽核查并留下可复用命令：枚举 Modot 解析出的全部包（含传递依赖），**读取每个包内 DLL 的程序集引用**，确认除 `GodotSharp`/`GodotSharpEditor` 外没有任何第三方 DLL 引用 `GodotSharp`；验证输出里只剩两个 vendored 项目而它们已不以包形式出现。**判据不得使用 nuspec 或源码文本搜索** —— 两者都会漏判（`GDSerializer` 与 `GDLogger` 的 nuspec 都未声明该依赖），把实际命令记进 `AGENTS.md` 或 `tests/README.md` 供后续新增依赖时复用
 
 ## 6. 打包
 
 - [ ] 6.1 更新 `scripts/pack-local.ps1`（已 gitignore）按依赖顺序打包三个包：`src/GDSerializer` → `src/GDLogger` → `src/Modot`，均 `Release`、均输出到 `D:/GNuget`；验证脚本退出码为 0
 - [ ] 6.2 验证 `D:/GNuget` 下同时存在 `Modot.GDSerializer.4.0.0.nupkg`、`Modot.GDLogger.2.0.0.nupkg`、`Modot.3.0.0.nupkg`，且 `Modot.nuspec` 的依赖声明是 `Modot.GDSerializer` 与 `Modot.GDLogger`
-- [ ] 6.3 验证三个包的依赖列表中都不含 `GDLogger`（上游包名）、`GDSerializer`（上游包名）、`Carnagion.MoreLinq`、`System.CodeDom`、`JetBrains.Annotations`
+- [ ] 6.3 验证三个包的依赖列表中都不含 `GDLogger`（上游包名）、`GDSerializer`（上游包名）、`Carnagion.MoreLinq`、`JetBrains.Annotations`；而 `System.CodeDom` **应当出现**在序列化器包的依赖里（它是 `GetDisplayName` 的必需依赖，见 5.1）
 - [ ] 6.4 验证两个 vendored 包各自内含其程序集（`GDSerializer.dll` / `GDLogger.dll`）与包根 `LICENSE`
 
 ## 7. 验证收口与遗留事项

@@ -156,7 +156,7 @@ vendored `GDLogger` 提供的是 `public static class Godot.Log`，而 Modot 当
 
 ## Migration Plan
 
-一次性引入，无灰度。回滚：`git revert` 本次提交，并把 `src/Modot/Modot.csproj` 的两个 `ProjectReference` 还原为 `PackageReference Include="GDSerializer" Version="2.0.3"` 与 `Include="GDLogger" Version="1.0.1"`、恢复 `src/Modot/Log.cs`、恢复 `Carnagion.MoreLinq` 与 `System.CodeDom` 引用。
+一次性引入，无灰度。回滚：`git revert` 本次提交，并把 `src/Modot/Modot.csproj` 的两个 `ProjectReference` 还原为 `PackageReference Include="GDSerializer" Version="2.0.3"` 与 `Include="GDLogger" Version="1.0.1"`、恢复 `src/Modot/Log.cs`、恢复 `Carnagion.MoreLinq` 引用（`System.CodeDom` 全程保留，回滚无需处理）。
 
 ## Open Questions
 
