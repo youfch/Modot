@@ -44,6 +44,9 @@ dotnet test Modot.sln         # 引擎无关的测试
 
 - 目标为 `Godot.NET.Sdk/4.7.2` 与 `net10.0`。Godot 4.7.2 要求 .NET 8 及以上，本项目固定 `net10.0`，因此只有 `net10.0` 消费方能引用本包（`net8.0`/`net9.0` 会报 `NU1202`）。
 - **不要引入绑定 Godot 3 的包**。`Godot.Directory` 与 `Godot.File` 在 Godot 4 中已不存在，对应 `Godot.DirAccess` 与 `Godot.FileAccess`。
+- **凡引用 `GodotSharp` 的第三方依赖，必须把源码 vendor 进 `src/` 一起适配，不得以 NuGet 包形式依赖**。这类包与 Godot 版本强耦合（Godot 4 移除 `Godot.Directory`/`Godot.File`、把 `Vector2`/`Vector3` 的字段改名 `X`/`Y`/`Z` 等都足以让它们失效），而它们通常已随上游冻结、永远不会自行修复。
+  **判据不能看 nuspec**：`GDSerializer` 与 `GDLogger` 的 nuspec 都**没有**声明 `GodotSharp`，但它们的 DLL 都引用了它。正确做法是**读每个包内 DLL 的程序集引用**。`Godot.NET.Sdk` 提供的 `GodotSharp`/`GodotSharpEditor` 本身不在此列。
+  当前 `src/` 下的 vendor 项目：`src/GDSerializer`、`src/GDLogger`。
 - **`DirAccess` 不是可复用的全局实例**：`DirAccess.Open(path)` 返回绑定到该路径的新实例。跨文件系统根的建目录与复制（例如 `res://` → `user://`）必须使用绝对路径形态（`DirAccess.MakeDirRecursiveAbsolute`、`DirAccess.CopyAbsolute`），因为实例方法只能在其被打开的那个根内操作。列举目录时用 `ListDirBegin()` 开始、用 `ListDirEnd()` 结束。
 - **程序集加载使用 `AssemblyLoadContext`**，不要用 `Assembly.LoadFile`：后者会把程序集载入隔离上下文，使 `ModStartupAttribute` 可能解析到另一份类型标识，导致 `[ModStartup]` 方法被静默跳过（不报错的失败模式）。
 - mod 程序集必须针对 Godot 4 编译；Godot 3 编译的程序集不受支持。
