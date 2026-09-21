@@ -1,0 +1,33 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>default</LangVersion>
+        <RootNamespace>Godot</RootNamespace>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Workaround as Godot does not know how to properly load NuGet packages -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <!-- Packed explicitly by scripts/pack-local.ps1 rather than on every build -->
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <!-- Assembly identity must stay exactly as upstream: Modot's public API and mod assemblies
+             reference Godot.Serialization.* / Godot.Utility.* from an assembly called GDSerializer. -->
+        <AssemblyName>GDSerializer</AssemblyName>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <PackageId>Modot.GDSerializer</PackageId>
+        <PackageVersion>4.0.0</PackageVersion>
+        <Title>GDSerializer (Modot fork)</Title>
+        <Authors>Carnagion</Authors>
+        <Description>A vendored fork of GDSerializer, adapted to Godot 4 and .NET 10. An XML (de)serialization framework for Godot's C# API.</Description>
+        <RepositoryUrl>https://github.com/Carnagion/GDSerializer</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Carnagion.MoreLinq" Version="1.4.0"/>
+        <!-- Required: TypeExtensions.GetDisplayName uses CSharpCodeProvider, and that output is written
+             into the serialized Type= discriminator that mod data depends on. Deliberately not upgraded. -->
+        <PackageReference Include="System.CodeDom" Version="6.0.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="LICENSE" Pack="true" PackagePath=""/>
+    </ItemGroup>
+</Project>

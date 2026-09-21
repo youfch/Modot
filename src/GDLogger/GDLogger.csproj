@@ -1,0 +1,27 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>default</LangVersion>
+        <RootNamespace>Godot</RootNamespace>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Workaround as Godot does not know how to properly load NuGet packages -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <!-- Packed explicitly by scripts/pack-local.ps1 rather than on every build -->
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <!-- Assembly identity must stay exactly as upstream: Modot resolves Godot.Log from an
+             assembly called GDLogger. -->
+        <AssemblyName>GDLogger</AssemblyName>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <PackageId>Modot.GDLogger</PackageId>
+        <PackageVersion>2.0.0</PackageVersion>
+        <Title>GDLogger (Modot fork)</Title>
+        <Authors>Carnagion</Authors>
+        <Description>A vendored fork of GDLogger, adapted to Godot 4 and .NET 10. A logger that writes entries to the Godot log and to a log file.</Description>
+        <RepositoryUrl>https://github.com/Carnagion/GDLogger</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="LICENSE" Pack="true" PackagePath=""/>
+    </ItemGroup>
+</Project>

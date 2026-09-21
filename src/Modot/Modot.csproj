@@ -16,8 +16,12 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="GDSerializer" Version="2.0.3"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2022.1.0"/>
+        <!-- Vendored forks. Their assembly names stay GDSerializer / GDLogger, so mod assemblies and
+             Modot's own public metadata keep resolving the same type identities. -->
+        <ProjectReference Include="..\GDSerializer\GDSerializer.csproj"/>
+        <ProjectReference Include="..\GDLogger\GDLogger.csproj"/>
+        <!-- Compile-time annotations only: PrivateAssets keeps it out of the published package's dependencies -->
+        <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="all"/>
     </ItemGroup>
     <!-- These files live at the repository root, two levels above src/Modot/ -->
     <ItemGroup>
