@@ -69,3 +69,7 @@ scripts/pack-local.ps1
 
 # ===== e2e 测试的构建产出（由 runner 组装生成，不入库） =====
 tests/e2e/Mods/*/Assemblies/
+# 编辑器为 mod 项目生成的解决方案文件（仓库用它自己的 Modot.sln）
+tests/e2e/Mods/*/*.sln
+# 例外：e2e 的 mod 项目要靠这个预设才能重建 pck（官方模板默认忽略 export_presets.cfg）
+!tests/e2e/Mods/*/export_presets.cfg

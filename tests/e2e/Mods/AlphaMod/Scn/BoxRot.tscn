@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://s56spqn30nog"]
+
+[ext_resource type="Script" uid="uid://64vtj2dei6pj" path="res://Scn/BoxRot.cs" id="1_djnlr"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_ujj4n"]
+
+[node name="Node3D" type="Node3D" unique_id=1836354211]
+script = ExtResource("1_djnlr")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=876567608]
+mesh = SubResource("BoxMesh_ujj4n")

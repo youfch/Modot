@@ -1,6 +1,11 @@
-[gd_scene format=3 uid="uid://cv36pq31nunk3"]
+[gd_scene load_steps=2 format=3 uid="uid://cv36pq31nunk3"]
 
 [ext_resource type="Script" uid="uid://i0weyfty4shq" path="res://Host.cs" id="1_host"]
 
-[node name="Host" type="Node" unique_id=784385005]
+[node name="Host" type="Node3D"]
 script = ExtResource("1_host")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 5)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]

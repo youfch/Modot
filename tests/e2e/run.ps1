@@ -38,25 +38,14 @@ $fixturesDir = Join-Path $e2eDir 'fixtures'
 Write-Host "Godot: $Godot"
 Write-Host "Configuration: $Configuration"
 
-dotnet build (Join-Path $modDir 'AlphaMod.csproj') -c $Configuration -v:q
-if ($LASTEXITCODE -ne 0) {
-    throw "Building AlphaMod failed with exit code $LASTEXITCODE"
-}
+# Build the mod assembly and refresh the copy Modot loads. The pack is deliberately left as committed
+# here, so a test run does not rewrite it; run assemble.ps1 on its own after editing assets.
+& (Join-Path $PSScriptRoot 'assemble.ps1') -Godot $Godot -Configuration $Configuration -SkipPack
 
 dotnet build (Join-Path $hostDir 'Host.csproj') -c $Configuration -v:q
 if ($LASTEXITCODE -ne 0) {
     throw "Building Host failed with exit code $LASTEXITCODE"
 }
-
-# Assemble the mod directory. Only the mod's own assembly may be copied here: Mod.LoadAssemblies
-# loads every *.dll under Assemblies/ into the same load context as Modot, so copying the whole
-# build output would collide with the already loaded Modot/GDSerializer/GDLogger/GodotSharp.
-$assemblies = Join-Path $modDir 'Assemblies'
-New-Item -ItemType Directory -Path $assemblies -Force | Out-Null
-Get-ChildItem -LiteralPath $assemblies -File -ErrorAction SilentlyContinue | Remove-Item -Force
-Copy-Item (Join-Path $modDir ".godot\mono\temp\bin\$Configuration\AlphaMod.dll") (Join-Path $assemblies 'AlphaMod.dll') -Force
-
-Write-Host ("Assemblies/ contains: " + ((Get-ChildItem -LiteralPath $assemblies -File | Select-Object -ExpandProperty Name) -join ', '))
 
 $scenarios = @(
     @{ Name = 'alpha'; Dirs = @($modDir) },
@@ -64,6 +53,7 @@ $scenarios = @(
     @{ Name = 'duplicate'; Dirs = @((Join-Path $fixturesDir 'duplicate-a'), (Join-Path $fixturesDir 'duplicate-b')) },
     @{ Name = 'missing-dep'; Dirs = @((Join-Path $fixturesDir 'missing-dep')) },
     @{ Name = 'patches'; Dirs = @((Join-Path $fixturesDir 'patches')) },
+    @{ Name = 'pack'; Dirs = @($modDir) },
     @{ Name = 'cycle'; Dirs = @((Join-Path $fixturesDir 'cycle-a'), (Join-Path $fixturesDir 'cycle-b')) },
     @{ Name = 'incompatible'; Dirs = @((Join-Path $fixturesDir 'incompatible-a'), (Join-Path $fixturesDir 'incompatible-b')) }
 )
