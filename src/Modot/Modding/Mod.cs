@@ -8,6 +8,7 @@ using System.Xml;
 
 using JetBrains.Annotations;
 
+using Godot.Bridge;
 using Godot.Modding.Patching;
 using Godot.Serialization;
 
@@ -64,17 +65,24 @@ namespace Godot.Modding
             get;
         }
         
+        /// <summary>
+        /// The assemblies already registered with Godot's script bridge, so that a repeated load does not try to register one twice.
+        /// </summary>
+        private static readonly HashSet<string> registeredAssemblies = new();
+
         private IEnumerable<Assembly> LoadAssemblies()
         {
             string assembliesPath = $"{this.Meta.Directory}{System.IO.Path.DirectorySeparatorChar}Assemblies";
             
+            // Materialised, not lazy: loading is what registers an assembly with Godot (see LoadAssembly), and
+            // enumerating this more than once would load and register the same assembly again.
             return System.IO.Directory.Exists(assembliesPath)
-                ? System.IO.Directory.GetFiles(assembliesPath, "*dll", SearchOption.AllDirectories).Select(Mod.LoadAssembly)
+                ? System.IO.Directory.GetFiles(assembliesPath, "*dll", SearchOption.AllDirectories).Select(Mod.LoadAssembly).ToArray()
                 : Enumerable.Empty<Assembly>();
         }
         
         /// <summary>
-        /// Loads the assembly at <paramref name="path"/> into the load context that hosts Modot.
+        /// Loads the assembly at <paramref name="path"/> into the load context that hosts Modot and registers it with Godot's script bridge.
         /// </summary>
         /// <param name="path">The path of the assembly to load.</param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
@@ -84,7 +92,17 @@ namespace Godot.Modding
             // Assembly.LoadFile() would load into an isolated context, where ModStartupAttribute can resolve to a different type and the lookup silently finds nothing.
             AssemblyLoadContext context = AssemblyLoadContext.GetLoadContext(typeof(Mod).Assembly) ?? AssemblyLoadContext.Default;
             // LoadFromAssemblyPath() requires an absolute path, whereas Assembly.LoadFile() also accepted a relative one
-            return context.LoadFromAssemblyPath(System.IO.Path.GetFullPath(path));
+            Assembly assembly = context.LoadFromAssemblyPath(System.IO.Path.GetFullPath(path));
+            // Godot resolves a scene's script reference through a registry built from the assemblies it knows at
+            // startup, so an assembly loaded here at runtime is invisible to it and a packed scene's scripts would
+            // not bind. Registering the assembly puts its generated [ScriptPath] types into that registry.
+            // The call is NOT idempotent - registering the same script path twice throws ArgumentException - so it
+            // is guarded rather than repeated.
+            if (Mod.registeredAssemblies.Add(assembly.FullName ?? path))
+            {
+                ScriptManagerBridge.LookupScriptsInAssembly(assembly);
+            }
+            return assembly;
         }
         
         private XmlDocument? LoadData()
