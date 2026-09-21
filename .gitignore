@@ -66,3 +66,6 @@ desktop.ini
 .omo/
 .codegraph/
 scripts/pack-local.ps1
+
+# ===== e2e 测试的构建产出（由 runner 组装生成，不入库） =====
+tests/e2e/Mods/*/Assemblies/

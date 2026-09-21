@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mod>
+  <Id>order-a</Id>
+  <Name>Order A</Name>
+  <Author>Modot e2e</Author>
+  <Before Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>order-b</item>
+  </Before>
+</Mod>

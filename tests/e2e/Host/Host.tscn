@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cv36pq31nunk3"]
+
+[ext_resource type="Script" uid="uid://i0weyfty4shq" path="res://Host.cs" id="1_host"]
+
+[node name="Host" type="Node" unique_id=784385005]
+script = ExtResource("1_host")

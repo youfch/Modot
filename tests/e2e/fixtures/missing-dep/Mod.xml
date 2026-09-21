@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mod>
+  <Id>missing-dep</Id>
+  <Name>Missing Dep</Name>
+  <Author>Modot e2e</Author>
+  <Dependencies Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>does-not-exist</item>
+  </Dependencies>
+</Mod>

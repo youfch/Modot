@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mod>
+  <Id>cycle-b</Id>
+  <Name>Cycle B</Name>
+  <Author>Modot e2e</Author>
+  <After Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>cycle-a</item>
+  </After>
+</Mod>

@@ -42,4 +42,4 @@
 ## 7. 验证收口与遗留事项
 
 - [x] 7.1 `dotnet build Modot.sln -c Release --no-incremental` 退出码为 0；警告只有既有的 `CS8602`（`ModLoader.cs:112`）、`CS8714`（`EnumerableExtensions.cs:36`）与既有的 `NU5119`（`.gitignore` 无法成为包内容，dotfile 被 NuGet 默认排除），无新增警告
-- [ ] 7.2 **运行时验证（本机可做）**，载体是 `add-e2e-test-suite` 交付的 e2e 套件：用本机 Godot 4.7.2 headless 运行，以退出码与输出断言验证 `DirAccess` 的遍历/递归/跨根复制、`ProjectSettings.LoadResourcePack` 加载 `.pck`、`GD.Print`/`GD.PushError` 的日志输出。在该套件交付前，不得声称这些行为已验证
+- [ ] 7.2 **运行时验证（本机可做）**，载体是 `add-e2e-test-suite` 交付的 e2e 套件：用本机 Godot 4.7.2 headless 运行，以退出码与输出断言验证 `DirAccess` 的遍历/递归/跨根复制、`ProjectSettings.LoadResourcePack` 加载 `.pck`、`GD.Print`/`GD.PushError` 的日志输出。**现状（套件已交付，覆盖不完整）**：`tests/e2e` 已覆盖 `DirAccess.RemoveAbsolute` + `ProjectSettings.GlobalizePath`（每次 `alpha` 场景都会执行）以及 mod 侧的 `FileAccess` 写入；但**未覆盖** `DirAccess` 的遍历/递归/跨根复制，也**未覆盖** `.pck` 加载与日志输出断言。因此本任务对后几项**仍未验证**，不得因套件已建成而视为已验证

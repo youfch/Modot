@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+    <XPath>Items</XPath>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>cond</Attribute>
+    <Value>hit</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>cond</Attribute>
+    <Value>miss</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

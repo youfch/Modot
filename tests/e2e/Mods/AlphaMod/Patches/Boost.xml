@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A patch is deserialized by GDSerializer, which resolves the target type from the root element name
+  (or a Type attribute). The element name below is the C# display name of Godot.Modding.Patching.NodeAddPatch,
+  and each child element name is the name of one of that patch's [Serialize] members.
+-->
+<Godot.Modding.Patching.NodeAddPatch>
+  <Value>
+    <Boosted by="alpha"/>
+  </Value>
+</Godot.Modding.Patching.NodeAddPatch>

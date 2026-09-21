@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mod>
+  <Id>incompatible-b</Id>
+  <Name>Incompatible B</Name>
+  <Author>Modot e2e</Author>
+  <Incompatible Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>incompatible-a</item>
+  </Incompatible>
+</Mod>

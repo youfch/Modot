@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Mod>
+  <Id>after-a</Id>
+  <Name>After A</Name>
+  <Author>Modot e2e</Author>
+  <After Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>after-b</item>
+  </After>
+</Mod>

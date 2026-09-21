@@ -30,7 +30,8 @@ scripts/               本机工具脚本
 
 ```powershell
 dotnet build Modot.sln        # 解决方案级构建
-dotnet test Modot.sln         # 引擎无关的测试
+dotnet test tests/Modot.Tests    # 第一层：引擎无关的测试
+./tests/e2e/run.ps1              # 第二层：需要引擎（Godot 4.7.2 .NET 版）
 ./scripts/pack-local.ps1      # 打包到本机 NuGet 落地区 D:/GNuget
 ```
 
@@ -56,6 +57,7 @@ dotnet test Modot.sln         # 引擎无关的测试
 
 - 所有文本文件使用 **UTF-8 无 BOM**；缩进、行尾与命名遵循 `.editorconfig`。
 - **`.ps1` 脚本必须只含 ASCII 字符**。Windows PowerShell 5.1 会把无 BOM 的 `.ps1` 当作 ANSI 读取，非 ASCII 字符会让解析器报"字符串缺少终止符"。中文说明请写在 `.md` 文件里，不要写进 `.ps1`。
+- **不要用 `Get-Content -Raw` 读写无 BOM 的 UTF-8 文本文件**。PowerShell 5.1 会按 ANSI 解码它，再用 UTF-8 写回就成了双重编码的乱码（本仓库已被此坑坏过一次 `tasks.md`）。改文本用专门的编辑工具；确需脚本化时用 `[System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8)` 读、用 `[System.IO.File]::WriteAllText($p, $t, (New-Object System.Text.UTF8Encoding($false)))` 写。
 - 解决方案使用经典 `Modot.sln`。注意 .NET 10 的 `dotnet new sln` 默认生成 `.slnx`，需要显式传 `--format sln`。
 - 公共 API 的破坏性变更必须在变更提案里标注 `BREAKING`。
 

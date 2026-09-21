@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@temp]</Targets>
+  <Patch Type="Godot.Modding.Patching.AttributeRemovePatch">
+    <Attribute>temp</Attribute>
+  </Patch>
+</Godot.Modding.Patching.TargetedPatch>
