@@ -1,0 +1,54 @@
+schema: spec-driven
+
+context: |
+  Language: Simplified Chinese
+  All artifacts must be written in Simplified Chinese.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  项目：Modot —— 面向 Godot 应用的运行时 mod 加载器（C# 库，以 NuGet 包分发）。
+  上游：https://github.com/Carnagion/Modot（已冻结在 Godot 3）；本仓库为 fork，自行承担迁移与维护。
+
+  仓库布局：
+  - src/<项目名>/ 每个 .NET 项目一个目录，库本体为 src/Modot/
+  - tests/<项目名>/ 测试项目按项目分目录
+  - 根目录放 Modot.sln、仓库级文档（README.md、CONTRIBUTING.md、AGENTS.md）与 openspec/
+
+  目标平台：Godot.NET.Sdk/4.7.2 与 net10.0。
+  Godot 4.7.2 要求 .NET 8 及以上，本项目固定 net10.0，故仅 net10.0 消费方可引用本包。
+
+  依赖：GDSerializer 2.0.3（引擎无关，仅依赖 Carnagion.MoreLinq 与 System.CodeDom）、
+  JetBrains.Annotations 2022.1.0。不得引入绑定 Godot 3 的包。
+
+  构建与验证：
+  - dotnet build Modot.sln
+  - dotnet test Modot.sln（不含需要引擎的测试）
+  - 需要引擎的运行时验证（DirAccess、ProjectSettings.LoadResourcePack、GD.Print/GD.PushError）
+    必须在装有 Godot 4.7.2 .NET 版的机器上执行，当前开发机未安装引擎，因此只能提供编译级证据。
+
+  打包：scripts/pack-local.ps1 把 .nupkg 输出到 D:/GNuget；该脚本已加入 .gitignore，属本机工具。
+
+  约定：
+  - 遵循 .editorconfig；公共 API 的破坏性变更必须在 proposal 中标注 BREAKING。
+  - 未经用户明确指示，不得 commit 或 push。
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
