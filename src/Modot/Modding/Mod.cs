@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Xml;
 
 using JetBrains.Annotations;
@@ -68,8 +69,22 @@ namespace Godot.Modding
             string assembliesPath = $"{this.Meta.Directory}{System.IO.Path.DirectorySeparatorChar}Assemblies";
             
             return System.IO.Directory.Exists(assembliesPath)
-                ? System.IO.Directory.GetFiles(assembliesPath, "*dll", SearchOption.AllDirectories).Select(Assembly.LoadFile)
+                ? System.IO.Directory.GetFiles(assembliesPath, "*dll", SearchOption.AllDirectories).Select(Mod.LoadAssembly)
                 : Enumerable.Empty<Assembly>();
+        }
+        
+        /// <summary>
+        /// Loads the assembly at <paramref name="path"/> into the load context that hosts Modot.
+        /// </summary>
+        /// <param name="path">The path of the assembly to load.</param>
+        /// <returns>The loaded <see cref="Assembly"/>.</returns>
+        private static Assembly LoadAssembly(string path)
+        {
+            // Type identity has to be shared with the context hosting Modot, because mod startup methods are discovered and invoked via reflection on ModStartupAttribute.
+            // Assembly.LoadFile() would load into an isolated context, where ModStartupAttribute can resolve to a different type and the lookup silently finds nothing.
+            AssemblyLoadContext context = AssemblyLoadContext.GetLoadContext(typeof(Mod).Assembly) ?? AssemblyLoadContext.Default;
+            // LoadFromAssemblyPath() requires an absolute path, whereas Assembly.LoadFile() also accepted a relative one
+            return context.LoadFromAssemblyPath(System.IO.Path.GetFullPath(path));
         }
         
         private XmlDocument? LoadData()

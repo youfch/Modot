@@ -1,6 +1,68 @@
+# ===== 构建产物 =====
 bin/
 obj/
-*.sln
-.mono/
+out/
+artifacts/
+*.nupkg
+*.snupkg
+*.symbols.nupkg
+
+# ===== .NET / MSBuild 中间产物与日志 =====
+project.lock.json
+project.fragment.lock.json
+*.binlog
+*.tlog
+*.cache
+*.log
+
+# ===== 测试与覆盖率 =====
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# ===== Godot 4 =====
+.godot/
 .import/
+export_presets.cfg
+*.translation
+mono_crash.*.json
+/android/
+
+# ===== Godot 3 历史遗留（仓库内仍可能残留 .mono/） =====
+.mono/
+
+# ===== Visual Studio =====
+.vs/
+*.suo
+*.user
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.sln.ide/
+*.VC.db
+*.VC.VC.opendb
+
+# ===== VS Code =====
+.vscode/
+
+# ===== Rider / ReSharper / Fleet =====
 .idea/
+.fleet/
+*.sln.iml
+_ReSharper*/
+*.DotSettings.user
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 本机工具与本地索引（不入库） =====
+.omo/
+.codegraph/
+scripts/pack-local.ps1

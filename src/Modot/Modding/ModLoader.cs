@@ -16,7 +16,8 @@ namespace Godot.Modding
     [PublicAPI]
     public static class ModLoader
     {
-        private static readonly OrderedDictionary<string, Mod> loadedMods = new();
+        // Fully qualified because net10.0 introduces System.Collections.Generic.OrderedDictionary, which would otherwise make the unqualified name ambiguous
+        private static readonly Godot.Utility.OrderedDictionary<string, Mod> loadedMods = new();
         
         /// <summary>
         /// All the <see cref="Mod"/>s that have been loaded at runtime.
