@@ -16,8 +16,10 @@ src/Modot/             库本体，唯一的产品代码项目
   Modding/             Mod、ModLoader、ModLoadException、ModStartupAttribute
   Modding/Patching/    补丁系统：IPatch 及其实现、Conditions/
   Utility/             ErrorException 与 Extensions/
-  Log.cs               内部日志实现（替代 GDLogger）
-tests/<项目名>/        测试项目按项目分目录
+src/GDSerializer/      序列化器（vendor 自上游 GDSerializer，已适配 Godot 4）
+src/GDLogger/          日志器（vendor 自上游 GDLogger，已适配 Godot 4）
+tests/Modot.Tests/     第一层测试：引擎无关，不需要引擎
+tests/e2e/             第二层测试：需要引擎（Godot 4.7.2）
 openspec/              OpenSpec 工作区
   config.yaml          项目上下文（含语言约束）
   specs/               已归档的能力规格
@@ -51,7 +53,10 @@ dotnet test tests/Modot.Tests    # 第一层：引擎无关的测试
 - **`DirAccess` 不是可复用的全局实例**：`DirAccess.Open(path)` 返回绑定到该路径的新实例。跨文件系统根的建目录与复制（例如 `res://` → `user://`）必须使用绝对路径形态（`DirAccess.MakeDirRecursiveAbsolute`、`DirAccess.CopyAbsolute`），因为实例方法只能在其被打开的那个根内操作。列举目录时用 `ListDirBegin()` 开始、用 `ListDirEnd()` 结束。
 - **程序集加载使用 `AssemblyLoadContext`**，不要用 `Assembly.LoadFile`：后者会把程序集载入隔离上下文，使 `ModStartupAttribute` 可能解析到另一份类型标识，导致 `[ModStartup]` 方法被静默跳过（不报错的失败模式）。
 - mod 程序集必须针对 Godot 4 编译；Godot 3 编译的程序集不受支持。
-- **`GDSerializer` 不是引擎无关的**（这点容易看错：它的 nuspec 只声明 `Carnagion.MoreLinq` 与 `System.CodeDom`，但其 DLL 硬引用了 `GodotSharp`）。它的 `VectorSerializer` 仍按 Godot 3 的字段名访问 `Vector2.x`/`Vector3.x`，在 Godot 4 上会抛 `MissingFieldException`（实测）。Modot 自身只序列化 `string`、`XmlNode` 与自有接口，不经过该路径（实测 `Metadata.Load` 与标量往返均正常），所以当前可用；但**不要**把引擎类型放进 `[Serialize]` 成员。补丁与元数据的反序列化承载在它身上，替换或 vendor 前先看 `openspec/changes/` 里的相关变更。
+- **`GDSerializer` 与 `GDLogger` 已 vendor 进 `src/`**，以 `ProjectReference` 引用。包名用 `Modot.GDSerializer` / `Modot.GDLogger`，但**程序集名必须保持 `GDSerializer` / `GDLogger`、`AssemblyVersion` 保持 `1.0.0.0`** —— Modot 的公共元数据与 mod 程序集的类型标识都依赖它，不要"顺手"把两者改成一致。
+  两者的 Godot 4 适配已完成：`VectorSerializer` 改读 `Vector2`/`Vector3` 的 `X`/`Y`/`Z`（Godot 4 改了字段名，沿用旧名会抛 `MissingFieldException`，实测）；日志器从已移除的 `Godot.File` 移植到 `FileAccess`，并把文件句柄改为**惰性**获取，使类型初始化不做 I/O。
+  上游的 `System.CodeDom` 依赖**保留且刻意不升级**：它驱动 `TypeExtensions.GetDisplayName` 的输出，而那段类型名会被写进序列化 XML 的 `Type=` 属性、并作为补丁类型的解析判据。
+  Modot 自身只序列化 `string`、`XmlNode` 与自有接口，**不要**把引擎类型放进 `[Serialize]` 成员。
 
 ## 文件编码与格式
 

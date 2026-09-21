@@ -22,7 +22,6 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Carnagion.MoreLinq" Version="1.4.0"/>
         <!-- Required: TypeExtensions.GetDisplayName uses CSharpCodeProvider, and that output is written
              into the serialized Type= discriminator that mod data depends on. Deliberately not upgraded. -->
         <PackageReference Include="System.CodeDom" Version="6.0.0"/>
