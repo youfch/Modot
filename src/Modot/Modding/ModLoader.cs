@@ -43,10 +43,13 @@ namespace Godot.Modding
             Mod mod = new(Mod.Metadata.Load(modDirectoryPath));
             ModLoader.loadedMods.Add(mod.Meta.Id, mod);
             
-            // Cache XML data of loaded mods for repeat enumeration later
+            // Cache XML data of loaded mods for repeat enumeration later.
+            // The mod was added to LoadedMods above, so its own data root is already part of this sequence;
+            // appending it again made every patch run against the mod's own data twice. The registration
+            // itself has to stay before this point, because ModLoadedCondition reads LoadedMods while the
+            // patches below are being applied - a mod has to be able to see itself.
             XmlElement[] data = ModLoader.LoadedMods.Values
                 .Select(loadedMod => loadedMod.Data?.DocumentElement)
-                .Append(mod.Data?.DocumentElement)
                 .NotNull()
                 .ToArray();
             
@@ -154,17 +157,21 @@ namespace Godot.Modding
         
         private static IEnumerable<Mod.Metadata> SortModMetadata(Dictionary<string, Mod.Metadata> filteredMetadata)
         {
-            // Create a graph of each metadata ID and the IDs of those that need to be loaded after it
+            // Create a graph of each metadata ID and the IDs that have to be loaded *before* it. The direction
+            // matters: TopologicalSort's selector returns an element's dependencies and visits those first, so
+            // this graph holds predecessors. The metadata lists read the other way round - After names mods
+            // that follow this one, so this one is their predecessor - which is why the two assignments below
+            // are not the shape the list names suggest.
             Dictionary<string, HashSet<string>> dependencyGraph = new();
             foreach (Mod.Metadata metadata in filteredMetadata.Values)
             {
                 dependencyGraph.TryAdd(metadata.Id, new());
-                metadata.After.ForEach(after => dependencyGraph[metadata.Id].Add(after));
-                foreach (string before in metadata.Before)
+                foreach (string after in metadata.After)
                 {
-                    dependencyGraph.TryAdd(before, new());
-                    dependencyGraph[before].Add(metadata.Id);
+                    dependencyGraph.TryAdd(after, new());
+                    dependencyGraph[after].Add(metadata.Id);
                 }
+                metadata.Before.ForEach(before => dependencyGraph[metadata.Id].Add(before));
             }
             
             // Topologically sort the dependency graph, removing cyclic dependencies if any

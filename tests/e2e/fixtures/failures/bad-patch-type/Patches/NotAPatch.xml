@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Unlike bad-patch, the root element here names a type that *does* exist, so deserialization can succeed and
+  the failure comes from the result not being an IPatch. The two are different failure shapes reaching the
+  same contract, and before the fix they produced different exception types - which is the point of keeping
+  both fixtures rather than one.
+-->
+<System.String>not a patch</System.String>

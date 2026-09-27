@@ -176,7 +176,19 @@ namespace Godot.Modding
                 document.Load(patchPath);
                 if (document.DocumentElement is not null)
                 {
-                    yield return serializer.Deserialize(document.DocumentElement) as IPatch ?? throw new ModLoadException(this.Meta.Directory, $"Invalid patch at {patchPath}");
+                    IPatch patch;
+                    try
+                    {
+                        patch = serializer.Deserialize(document.DocumentElement) as IPatch ?? throw new ModLoadException(this.Meta.Directory, $"Invalid patch at {patchPath}");
+                    }
+                    catch (Exception exception) when (exception is not ModLoadException)
+                    {
+                        // Same contract as Metadata.Load: whatever the serializer throws is a load failure and
+                        // is reported as one, so a caller catching ModLoadException sees every failure shape
+                        // rather than only the ones that happen to reach the null check above.
+                        throw new ModLoadException(this.Meta.Directory, exception);
+                    }
+                    yield return patch;
                 }
             }
         }

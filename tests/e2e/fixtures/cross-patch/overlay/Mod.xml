@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The overlay declares Before: cp-base so the base mod is loaded first. Modot applies each mod's patches to
+  the data of every mod loaded so far, so the overlay's patch can reach into the base mod's document - that
+  cross-mod reach is the point of this fixture, and the only thing that makes it possible is the base mod
+  being in the patch set before the overlay's patches run.
+
+  Before means what its documentation says: it lists the mods that must be loaded *before* this one. This
+  fixture declared After until the SortModMetadata fix - under the old inverted semantics that was what
+  loaded cp-base first, and the suite caught the change immediately.
+-->
+<Mod>
+  <Id>cp-overlay</Id>
+  <Name>Cross Patch Overlay</Name>
+  <Author>Modot e2e</Author>
+  <Before Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>cp-base</item>
+  </Before>
+</Mod>

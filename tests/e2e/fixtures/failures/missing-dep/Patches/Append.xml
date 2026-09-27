@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A NodeAddPatch appends, so how many times this element ends up under the data root is a count of how many
+  times the patch was applied - an AttributeSetPatch would look identical at one application and two.
+-->
+<Godot.Modding.Patching.NodeAddPatch>
+  <Value>
+    <Applied by="single-load"/>
+  </Value>
+</Godot.Modding.Patching.NodeAddPatch>

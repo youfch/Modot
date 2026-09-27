@@ -18,8 +18,8 @@ src/Modot/             库本体，唯一的产品代码项目
   Utility/             ErrorException 与 Extensions/
 src/GDSerializer/      序列化器（vendor 自上游 GDSerializer，已适配 Godot 4）
 src/GDLogger/          日志器（vendor 自上游 GDLogger，已适配 Godot 4）
-tests/Modot.Tests/     第一层测试：引擎无关，不需要引擎
-tests/e2e/             第二层测试：需要引擎（Godot 4.7.2）
+tests/unit/            第一层：引擎无关的测试（一个测试项目）
+tests/e2e/             第二层：引擎运行时 harness（不是测试项目）
 openspec/              OpenSpec 工作区
   config.yaml          项目上下文（含语言约束）
   specs/               已归档的能力规格
@@ -31,10 +31,10 @@ scripts/               本机工具脚本
 ## 构建、测试、打包
 
 ```powershell
-dotnet build Modot.sln        # 解决方案级构建
-dotnet test tests/Modot.Tests    # 第一层：引擎无关的测试
-./tests/e2e/run.ps1              # 第二层：需要引擎（Godot 4.7.2 .NET 版）
-./scripts/pack-local.ps1      # 打包到本机 NuGet 落地区 D:/GNuget
+dotnet build Modot.sln              # 解决方案级构建
+dotnet test tests/unit/Modot.Tests  # 第一层：引擎无关的测试
+./tests/e2e/Invoke-E2E.ps1          # 第二层：需要引擎（Godot 4.7.2 .NET 版）
+./scripts/pack-local.ps1            # 打包到本机 NuGet 落地区 D:/GNuget
 ```
 
 两个容易踩的构建坑：

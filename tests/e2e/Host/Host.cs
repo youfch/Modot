@@ -68,6 +68,9 @@ public partial class Host : Node3D
                 case "order":
                     this.RunOrder(modDirectories);
                     break;
+                case "order-before":
+                    this.RunBefore(modDirectories);
+                    break;
                 case "cycle":
                     this.RunCycle(modDirectories);
                     break;
@@ -76,6 +79,31 @@ public partial class Host : Node3D
                     this.RunExpectLoaded(modDirectories, 1);
                     break;
                 case "missing-dep":
+                    this.RunExpectLoaded(modDirectories, 0);
+                    break;
+                // The fixture's root element is not <Mod>, so loading must throw rather than be reported as
+                // "nothing loaded". The host catches it and exits nonzero; Invoke-E2E.ps1 expects that.
+                case "invalid-root":
+                    this.RunExpectLoaded(modDirectories, 0);
+                    break;
+                case "cross-patch":
+                    this.RunCrossPatch(modDirectories);
+                    break;
+                case "no-assemblies":
+                    this.RunNoAssemblies(modDirectories);
+                    break;
+                case "single-load":
+                    this.RunSingleLoad(modDirectories);
+                    break;
+                case "reload":
+                    this.RunReload(modDirectories);
+                    break;
+                // These two cannot finish loading: one ships a resource pack that is not a pack, the other a
+                // patch document that is not a patch. LoadMods must throw rather than quietly return a shorter
+                // sequence, and Invoke-E2E.ps1 expects the nonzero exit code that follows.
+                case "broken-pack":
+                case "bad-patch":
+                case "bad-patch-type":
                     this.RunExpectLoaded(modDirectories, 0);
                     break;
                 case "patches":
@@ -182,7 +210,9 @@ public partial class Host : Node3D
     /// Measured on Godot 4.7.2: declaring <c>Before: X</c> loads X *after* the declaring mod, and declaring
     /// <c>After: X</c> loads X *before* it — the opposite of both doc comments in <c>Mod.Metadata</c>.
     /// This assertion therefore targets what is observable and useful (a declaration reorders the load),
-    /// and pins the measured arrangement so that fixing the inversion trips this test on purpose.
+    /// and pins the arrangement the documentation promises. Input order is deliberately the reverse of what
+    /// the declaration asks for, so a no-op sort cannot satisfy it. After was the inverted list until the
+    /// SortModMetadata fix; it now means what its own documentation says.
     /// </remarks>
     private void RunOrder(string[] modDirectories)
     {
@@ -191,8 +221,183 @@ public partial class Host : Node3D
         GD.Print($"INPUT:[{string.Join(",", modDirectories.Select(System.IO.Path.GetFileName))}]");
 
         this.Check(ids.Count is 2, $"two mods loaded (got {ids.Count})");
-        this.Check(ids.Count is 2 && ids[0] is "after-b" && ids[1] is "after-a",
-            $"the declared relationship reordered the load to [after-b,after-a] (got [{string.Join(",", ids)}])");
+        this.Check(ids.Count is 2 && ids[0] is "after-a" && ids[1] is "after-b",
+            $"the declared relationship reordered the load to [after-a,after-b] (got [{string.Join(",", ids)}])");
+    }
+
+    /// <summary>
+    /// Asserts the <c>Before</c> direction of a declared load-order relationship.
+    /// </summary>
+    /// <remarks>
+    /// Companion to <see cref="RunOrder"/>. Both scenarios deliberately hand the directories over in the
+    /// order the declaration does *not* want, so passing means the declaration actively reordered the load
+    /// rather than the input order having been right by accident. The same measured inversion applies:
+    /// <c>Before: X</c> loads X *before* the declaring mod, so "order-a declares Before: order-b" is
+    /// satisfied by [order-b, order-a] - the reverse of the input, which is why the input is handed over that
+    /// way round. Before was the inverted list until the SortModMetadata fix.
+    /// </remarks>
+    private void RunBefore(string[] modDirectories)
+    {
+        List<string> ids = ModLoader.LoadMods(modDirectories).Select(mod => mod.Meta.Id).ToList();
+        GD.Print($"ORDER:[{string.Join(",", ids)}]");
+        GD.Print($"INPUT:[{string.Join(",", modDirectories.Select(System.IO.Path.GetFileName))}]");
+
+        this.Check(ids.Count is 2, $"two mods loaded (got {ids.Count})");
+        this.Check(ids.Count is 2 && ids[0] is "order-b" && ids[1] is "order-a",
+            $"the declared relationship reordered the load to [order-b,order-a] (got [{string.Join(",", ids)}])");
+    }
+
+    /// <summary>
+    /// Asserts that one mod's patch reaches another mod's data - the whole point of the patch system, and
+    /// until now the one thing it was never asked to do.
+    /// </summary>
+    /// <remarks>
+    /// <c>LoadMods</c> applies each mod's patches to the data roots of every mod loaded so far, so the
+    /// overlay's targeted patch selects a node inside the base mod's document. The overlay's own document is
+    /// asserted to still have no such node, so a patch landing on the wrong document cannot pass.
+    /// </remarks>
+    private void RunCrossPatch(string[] modDirectories)
+    {
+        List<Mod> mods = ModLoader.LoadMods(modDirectories).ToList();
+        GD.Print($"LOADED:[{string.Join(",", mods.Select(mod => mod.Meta.Id))}]");
+
+        this.Check(mods.Count is 2, $"two mods loaded (got {mods.Count})");
+        if (mods.Count is not 2)
+        {
+            return;
+        }
+
+        Mod? baseMod = mods.FirstOrDefault(mod => mod.Meta.Id is "cp-base");
+        Mod? overlay = mods.FirstOrDefault(mod => mod.Meta.Id is "cp-overlay");
+        this.Check(baseMod is not null && overlay is not null, "both cross-patch fixtures loaded");
+
+        XmlElement? baseRoot = baseMod?.Data?.DocumentElement;
+        XmlElement? overlayRoot = overlay?.Data?.DocumentElement;
+        this.Check(baseRoot is not null && overlayRoot is not null, "both mods loaded their data");
+        if (baseRoot is null || overlayRoot is null)
+        {
+            return;
+        }
+
+        XmlNode? item = baseRoot.SelectSingleNode("//Item[@id='cp-base-item']");
+        this.Check(item is XmlElement, "the base mod's item was found in the base mod's data");
+        this.Check(item?.Attributes?["patched-by"]?.Value is "cp-overlay",
+            $"the overlay's patch reached the base mod's item (got '{item?.Attributes?["patched-by"]?.Value}')");
+        this.Check(overlayRoot.SelectNodes("//Item")?.Count is 0,
+            "the overlay's own data was left alone, so the patch crossed mods rather than self-applying");
+    }
+
+    /// <summary>
+    /// Asserts that <c>executeAssemblies: false</c> stops code from running while still applying patches.
+    /// </summary>
+    /// <remarks>
+    /// Patch application precedes the <c>executeAssemblies</c> check in <c>LoadMods</c>, so the flag gates
+    /// code execution only. Read this together with the <c>alpha</c> scenario: it loads the same mod with the
+    /// default and does find the marker, so the marker's absence here is attributable to the flag.
+    /// </remarks>
+    private void RunNoAssemblies(string[] modDirectories)
+    {
+        RemoveMarker();
+
+        List<Mod> mods = ModLoader.LoadMods(modDirectories, executeAssemblies: false).ToList();
+
+        this.Check(mods.Count is 1, $"exactly one mod loaded (got {mods.Count})");
+        if (mods.Count is 0)
+        {
+            return;
+        }
+
+        XmlElement? root = mods[0].Data?.DocumentElement;
+        this.Check(root?.SelectSingleNode("Boosted") is not null,
+            "the mod's patch was applied even though its assemblies were not executed");
+        this.Check(!FileAccess.FileExists(StartupMarker),
+            "the [ModStartup] method did not run (no marker file)");
+    }
+
+    /// <summary>
+    /// Loads one mod through <c>LoadMod</c>, which by design ignores dependencies and load order, and pins
+    /// how many times that mod's patches end up applied to its own data.
+    /// </summary>
+    /// <remarks>
+    /// The fixture declares a dependency that is not present, so loading it here can only succeed if
+    /// <c>LoadMod</c> skips the dependency check that <c>LoadMods</c> performs - which is the behaviour under
+    /// assertion. The patch is a NodeAddPatch rather than an AttributeSetPatch because it appends: a set is
+    /// idempotent, so it would look the same whether applied once or twice and could not show the count.
+    /// </remarks>
+    private void RunSingleLoad(string[] modDirectories)
+    {
+        Mod mod = ModLoader.LoadMod(modDirectories[0]);
+
+        this.Check(mod.Meta.Id is "missing-dep",
+            $"LoadMod loaded the mod that LoadMods rejects for its missing dependency (got '{mod.Meta.Id}')");
+
+        XmlElement? root = mod.Data?.DocumentElement;
+        this.Check(root is not null, "the individually loaded mod has data");
+        if (root is null)
+        {
+            return;
+        }
+
+        int applied = root.SelectNodes("Applied")?.Count ?? -1;
+        GD.Print($"APPLIED:{applied}");
+        this.Check(applied is 1, $"LoadMod applied the mod's own patch exactly once (got {applied})");
+    }
+
+    /// <summary>
+    /// Loads the same mod directory twice in one process and pins what the second load does.
+    /// </summary>
+    /// <remarks>
+    /// <c>LoadedMods</c> is static, and the duplicate-ID check in <c>LoadModMetadata</c> only compares the
+    /// directories of the call it is in - it never looks at the registry of already-loaded mods. So the
+    /// second load passes that check, and the collision surfaces only when the freshly built Mod is added to
+    /// the registry.
+    ///
+    /// MEASURED: the second load throws <see cref="ArgumentException"/> ("An item with the same key has
+    /// already been added. Key: alpha"). This assertion pins that deliberately, because it is a defect: what
+    /// a second load *ought* to do is a product question, but an unhandled dictionary exception escaping
+    /// <c>LoadMods</c> is not the answer, and it is not the <c>ModLoadException</c> with "Duplicate ID" that
+    /// the within-a-call path produces. Fixing it trips this assertion on purpose.
+    ///
+    /// What the second load does *not* do is patch the first load's data again: it throws before reaching the
+    /// patching, which is why the Boosted count is asserted unchanged rather than merely printed.
+    /// </remarks>
+    private void RunReload(string[] modDirectories)
+    {
+        List<Mod> first = ModLoader.LoadMods(modDirectories).ToList();
+        this.Check(first.Count is 1, $"the first load loaded exactly one mod (got {first.Count})");
+        if (first.Count is not 1)
+        {
+            return;
+        }
+
+        XmlElement? firstRoot = first[0].Data?.DocumentElement;
+        this.Check(firstRoot is not null, "the first load's mod has data");
+        if (firstRoot is null)
+        {
+            return;
+        }
+
+        int before = firstRoot.SelectNodes("Boosted")?.Count ?? -1;
+        GD.Print($"RELOAD-BEFORE:{before}");
+
+        Exception? secondThrew = null;
+        try
+        {
+            ModLoader.LoadMods(modDirectories).ToList();
+        }
+        catch (Exception exception)
+        {
+            secondThrew = exception;
+        }
+
+        GD.Print($"RELOAD-SECOND-THREW:{secondThrew?.GetType().Name ?? "none"}");
+        GD.Print($"RELOAD-AFTER:{firstRoot.SelectNodes("Boosted")?.Count ?? -1}");
+
+        this.Check(before is 1, $"the first load applied the patch exactly once (got {before})");
+        this.Check(secondThrew is ArgumentException,
+            $"the second load fails with ArgumentException, the duplicate-ID collision escaping unhandled (got {secondThrew?.GetType().Name ?? "no exception"})");
+        this.Check(firstRoot.SelectNodes("Boosted")?.Count is 1,
+            "the second load did not patch the first load's data again");
     }
 
     private void RunCycle(string[] modDirectories)

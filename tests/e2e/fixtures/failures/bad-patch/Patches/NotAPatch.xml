@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The root element does not name an IPatch implementation, so Mod.LoadPatches cannot turn this document into a
+  patch. That must surface as a load failure rather than as a mod that quietly ships fewer patches than it
+  declares, which is the silent-failure shape this fixture is here to prevent.
+-->
+<Godot.Modding.NotAPatch>
+  <Whatever>1</Whatever>
+</Godot.Modding.NotAPatch>

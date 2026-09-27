@@ -213,8 +213,12 @@ namespace Godot.Serialization
                     }
                 }
                 
-                // Invoke all [AfterDeserialization] methods
-                type.GetAllMembers<MethodInfo>()
+                // Invoke all [AfterDeserialization] methods. These flags have to be explicit and have to
+                // include non-public members: the hook is an implementation detail of the type it sits on, so
+                // private methods are the normal case. BindingFlags.Default matches public members only, which
+                // silently skipped every private hook. Static methods are included because the invocation
+                // below passes null for them.
+                type.GetAllMembers<MethodInfo>(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Where(method => method.GetCustomAttribute<AfterDeserializationAttribute>() is not null)
                     .ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
                 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Targets is an XPath string, evaluated against every loaded mod's data document. The leading "//" makes it
+  document-scoped, so it matches the base mod's item and finds nothing in the overlay's own document - which
+  is what lets one assertion tell "patched the other mod" apart from "patched itself".
+-->
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@id='cp-base-item']</Targets>
+  <Patch Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>patched-by</Attribute>
+    <Value>cp-overlay</Value>
+  </Patch>
+</Godot.Modding.Patching.TargetedPatch>

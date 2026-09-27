@@ -69,6 +69,9 @@ scripts/pack-local.ps1
 
 # ===== e2e 测试的构建产出（由 runner 组装生成，不入库） =====
 tests/e2e/Mods/*/Assemblies/
+# mod 的构建产物：Resources/ 下的 .pck 由 Update-ModAssets.ps1 导出，不入库。
+# Invoke-E2E.ps1 每次运行前都会重建它，所以仓库里没有也能跑。
+tests/e2e/Mods/*/Resources/
 # 编辑器为 mod 项目生成的解决方案文件（仓库用它自己的 Modot.sln）
 tests/e2e/Mods/*/*.sln
 # 例外：e2e 的 mod 项目要靠这个预设才能重建 pck（官方模板默认忽略 export_presets.cfg）
