@@ -46,6 +46,7 @@
 | `reload` | 同进程二次加载：报重复 ID 且加载 0 个、首次数据未被再打补丁（`ExpectOutput = 'Duplicate ID'`） |
 | `directories` | 跨 `res://` → `user://` 建目录、复制、列举 —— 唯一无法用夹具替代的一段 |
 | `dependency` | 满足的依赖保留依赖者；**顺序无关**（依赖是过滤器而非排序规则，实测传入顺序即结果顺序） |
+| `extension` | **宿主拿到 mod 实现的接口实例**：mod 在 `[ModStartup]` 里注册 → 注册表 +1 → 宿主通过自己的接口调用它（`EXTENSIONS:before=0 after=1`） |
 
 **两个"断言宿主"的机制**，都反向验证过（改动后相关场景确实判 FAIL、runner 退出码 1）：
 
@@ -148,6 +149,65 @@ fixtures/
 2. `ModLoadedCondition` 用**该 mod 自己的 id** 断言肯定分支 —— `LoadMods` 在跑补丁**之前**就把 mod 注册进 `LoadedMods`，所以"mod 能看见自己"是真实语义（也正是修 `LoadMod` 重复应用时守住的那条顺序）
 
 **一处待观察的不一致**：`OrCondition.Conditions` **没有** `[Serialize]`，而 `AndCondition.Conditions` 有。按现有序列化行为（"有 private setter 的 public 属性照样能反序列化"，见下文 `Dependencies` 等四处同源现象）它仍能工作 —— 实测 `any="hit"` 就是证据。但这是同族不一致，将来若有人"顺手统一"给属性加/去 `[Serialize]`，值得连它一起处理。
+
+## 宿主如何拿到 mod 实现的接口实例
+
+这一节讲的是**使用方式**，不只是测试 —— 宿主应用想知道"mod 都扩展了什么"时，唯一有编译期类型安全的做法。
+
+**三段式**：宿主定义接口与注册表 → mod 实现并自我注册 → 宿主在 `LoadMods` **返回之后**读注册表。
+
+```csharp
+// ---- A（宿主）侧：接口与注册表，住在宿主自己的程序集里，mod 编译时引用它 ----
+namespace YourApp.Api
+{
+    public interface IModExtension { void OnLoaded(); }
+
+    public static class ModExtensionRegistry
+    {
+        private static readonly List<IModExtension> items = new();
+        public static IReadOnlyList<IModExtension> Items => items;
+        public static void Add(IModExtension extension) => items.Add(extension);
+    }
+}
+
+// ---- B（mod）侧：实现 + 在 [ModStartup] 里注册 ----
+using YourApp.Api;
+using Godot.Modding;
+
+public static class MyModCode
+{
+    [ModStartup]
+    public static void Startup() => ModExtensionRegistry.Add(new MyExtension());
+
+    private sealed class MyExtension : IModExtension
+    {
+        public void OnLoaded() { /* mod 自己的逻辑 */ }
+    }
+}
+
+// ---- A（宿主）侧：加载之后取实例 ----
+ModLoader.LoadMods(modDirectories);              // 所有 [ModStartup] 在这里跑完
+foreach (IModExtension extension in ModExtensionRegistry.Items)
+    extension.OnLoaded();
+```
+
+**为什么是"自我注册"而不是"宿主反射扫 mod 的类型"**：
+
+| | 自我注册（推荐） | 宿主反射扫描 |
+|---|---|---|
+| 构造依赖 | **mod 自己 `new`**，想传什么传什么 | 只能无参构造 |
+| 类型安全 | 双方都对接口有**编译期**引用 | 宿主不知道任何类型，全靠约定 |
+| 需要知道类名吗 | **不需要** | 不需要，但要处理"扫到零个" |
+| 漏注册 | 由文档约束 | 靠扫描兜底 |
+
+**四个必须知道的坑**：
+
+1. **程序集标识必须唯一** —— 最危险，且**不报错**。mod 编译时引用的那份宿主 API 必须与运行时加载的那一份是**同一程序集标识**；Modot 用 `AssemblyLoadContext` 而非 `Assembly.LoadFile` 正是为此。不一致时的表现是**注册表空空、没有任何异常** ✗。所以**要断言或打印注册数量**，让"零个"可见（`extension` 场景的 `EXTENSIONS:before=0 after=1` 就是这条守卫）。
+2. **`[ModStartup]` 在最末才跑** ⇒ 宿主必须在 `LoadMods` **返回之后**读注册表；在那之前读只会看到一半。
+3. **`executeAssemblies: false` 时注册表必然为空** —— 程序集照旧被载入，但没有任何 `[ModStartup]` 被调用。**空不等于故障**：它可能正是"我们故意没跑 mod 的代码"。要能把这两种情况分开（例如同时报告"发现的实现数"与"注册数"）。
+4. **多 mod 实现同一接口**时优先级要自己定；`ModLoader.LoadedMods` **保持加载顺序**，按它决定优先级是可复现的。
+
+**可运行的例子**：`Host/ExtensionContract.cs`（A 侧）+ `Mods/AlphaMod/AlphaMod.cs`（B 侧）+ `Host/Scenarios/ExtensionScenario.cs`（断言）—— 也就是 `extension` 场景。
 
 ## 缺陷（由扩覆盖实测抓到）
 

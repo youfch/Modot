@@ -2,6 +2,8 @@ using Godot;
 
 using Godot.Modding;
 
+using ModotE2E.Api;
+
 namespace AlphaMod
 {
     /// <summary>
@@ -35,6 +37,25 @@ namespace AlphaMod
         {
             using FileAccess? file = FileAccess.Open("user://alpha-params.marker", FileAccess.ModeFlags.Write);
             file?.StoreString($"{name}:{count}");
+        }
+
+        /// <summary>
+        /// Hands the host an implementation of its own interface, from a third <c>[ModStartup]</c> method.
+        /// </summary>
+        /// <remarks>
+        /// This is the direction that keeps the host out of the mod's business: the mod constructs its own
+        /// implementation (so it controls whatever dependencies it needs) and the host only ever sees the
+        /// interface. Nothing here names the type from the host's side.
+        /// </remarks>
+        [ModStartup]
+        public static void RegisterExtension()
+        {
+            ModExtensionRegistry.Add(new AlphaModExtension());
+        }
+
+        private sealed class AlphaModExtension : IModExtension
+        {
+            public string Describe() => "AlphaMod extension";
         }
     }
 }

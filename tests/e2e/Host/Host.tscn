@@ -1,11 +1,26 @@
-[gd_scene load_steps=2 format=3 uid="uid://cv36pq31nunk3"]
+[gd_scene format=3 uid="uid://cv36pq31nunk3"]
 
 [ext_resource type="Script" uid="uid://i0weyfty4shq" path="res://Host.cs" id="1_host"]
 
-[node name="Host" type="Node3D"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5x0fp"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_uwlye"]
+sky_material = SubResource("ProceduralSkyMaterial_5x0fp")
+
+[sub_resource type="Environment" id="Environment_w2iar"]
+background_mode = 2
+sky = SubResource("Sky_uwlye")
+glow_enabled = true
+
+[node name="Host" type="Node3D" unique_id=1768783911]
 script = ExtResource("1_host")
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1513579183]
+environment = SubResource("Environment_w2iar")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1629492735]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 5)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=856693648]

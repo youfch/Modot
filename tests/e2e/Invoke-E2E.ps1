@@ -92,7 +92,9 @@ $scenarios = @(
     # The satisfied dependency, passed in the reverse order of the dependency it declares.
     @{ Name = 'dependency'; Dirs = @((Join-Path $loadOrderDir 'dep-needs-base'), (Join-Path $loadOrderDir 'dep-base')) },
     # The logger, in the engine because its file path, lazy open and batched flush are all engine-bound.
-    @{ Name = 'logging'; Dirs = @($modDir) }
+    @{ Name = 'logging'; Dirs = @($modDir) },
+    # The mod implements an interface the host owns and registers itself, so the host holds real instances.
+    @{ Name = 'extension'; Dirs = @($modDir) }
 )
 
 if ($Scenario) {

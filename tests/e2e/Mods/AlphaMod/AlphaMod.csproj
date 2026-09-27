@@ -9,5 +9,9 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\src\Modot\Modot.csproj"/>
+        <!-- The host's own assembly, standing in for the API an application publishes for mods. Only the mod's
+             own DLL is copied into Assemblies/, so this reference resolves from the running host at runtime -
+             which is what makes the interface identity match. -->
+        <ProjectReference Include="..\..\Host\Host.csproj"/>
     </ItemGroup>
 </Project>
