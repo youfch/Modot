@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Appends to the data root, so <Banner> appears next to <Items> and <Config>. -->
+<Godot.Modding.Patching.NodeAddPatch>
+  <Value>
+    <Banner text="added by sample"/>
+  </Value>
+</Godot.Modding.Patching.NodeAddPatch>

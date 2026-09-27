@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pins the NodeReplacePatch defect rather than leaving it documented only.
+
+  Its Replacement node belongs to this patch document while Apply inserts it into the data document, and
+  XmlNode refuses a node from another document context. A patch file is always a different document from the
+  data it patches, so the type has never worked for any real use - which is why this scenario expects the
+  failure and asserts the message. The day someone fixes the patch, this stops passing and points at exactly
+  what changed. See the README's defect table.
+-->
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@id='to-replace']</Targets>
+  <Patch Type="Godot.Modding.Patching.NodeReplacePatch">
+    <Replacement>
+      <Item id="to-replace" replaced="true"/>
+    </Replacement>
+  </Patch>
+</Godot.Modding.Patching.TargetedPatch>

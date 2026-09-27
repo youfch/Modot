@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The second data file. Mod.LoadData merges every Data/**/*.xml into one document, and the conditional patch
+  below tests for this very element - so removing this file changes what that patch does.
+-->
+<Config>
+  <Setting key="greeting" value="hello"/>
+</Config>

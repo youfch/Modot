@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A second data file. Mod.LoadData merges every Data/**/*.xml into one document, and until now every fixture
+  shipped exactly one file, so the merge itself was never exercised.
+
+  It deliberately contains no Item element: the merge order comes from GetFiles, which promises nothing, so a
+  second Item would make the existing "//Item" assertions in the patches scenario resolve to whichever file
+  happened to come first - a flaky test rather than a stricter one.
+-->
+<Extra>
+  <Marker from="second-file"/>
+</Extra>

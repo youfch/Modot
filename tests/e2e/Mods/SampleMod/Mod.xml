@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A mod meant to be looked at by hand rather than exercised by the automated suite. Every part of it is
+  deliberately visible: it declares a dependency and a load-order relationship, ships two data files so the
+  merge can be seen, and uses only the patch kinds that work (NodeReplacePatch is excluded on purpose - it
+  throws for every real use, see tests/README.md).
+-->
+<Mod>
+  <Id>sample</Id>
+  <Name>Sample Mod</Name>
+  <Author>Modot sample</Author>
+  <Dependencies Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>alpha</item>
+  </Dependencies>
+  <Before Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>alpha</item>
+  </Before>
+</Mod>

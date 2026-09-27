@@ -7,7 +7,8 @@
 - **需要引擎**：否
 - **运行**：`dotnet test tests/unit/Modot.Tests`
 - **为什么单独一层**：能在没装 Godot 的机器上跑，且"元数据解析、校验、标量/集合序列化"这类断言不需要为每次验证多花几十秒启动引擎
-- **覆盖**：`Mod.xml` 元数据解析与字段往返、非法元数据的**现状**（见"已知缺陷"）、标量与集合的序列化往返、`Vector2`/`Vector3` 往返、日志器类型加载不做文件 I/O
+- **覆盖**：`Mod.xml` 元数据解析与字段往返、**边界形态**（缺必填成员与未知元素**都被拒绝**、语法错误抛 `ModLoadException`）、非法加载顺序与依赖声明的拒绝、标量与集合的序列化往返、`Vector2`/`Vector3` 往返、日志器类型加载不做文件 I/O
+- **为什么边界形态在这里而不是 e2e**：`Metadata.Load` 引擎无关，所以这些可以在没有 Godot 的机器上、以毫秒级代价覆盖 —— 放 e2e 只会让每次验证多花几十秒，换来同样的结论
 
 **移动测试项目后必须修正 `ProjectReference` 的相对路径** —— 目录每下一层就多一个 `..`。构建才会暴露，测试自身看不出来。
 
@@ -39,6 +40,12 @@
 | `invalid-root` | **预期失败**：元数据根节点不是 `<Mod>` 时必须抛错，而不是"加载了 0 个 mod" |
 | `broken-pack` | **预期失败**：`.pck` 不是资源包时抛 `ModLoadException` |
 | `bad-patch` | **预期失败**：补丁 XML 不能被解析成 `IPatch` 时必须失败 |
+| `bad-patch-type` | **预期失败**：补丁根节点的类型存在，但反序列化失败 |
+| `bad-patch-kind` | **预期失败**：类型能反序列化成功、但不是 `IPatch` → 消息含 `Invalid patch at`（与上两条走的是**不同代码分支**，命名消息才分得开） |
+| `replace-patch` | **预期失败**：`NodeReplacePatch` 对任何实际用法都抛异常 → 消息含 `different document context`（缺陷 6 的钉住） |
+| `reload` | 同进程二次加载：报重复 ID 且加载 0 个、首次数据未被再打补丁（`ExpectOutput = 'Duplicate ID'`） |
+| `directories` | 跨 `res://` → `user://` 建目录、复制、列举 —— 唯一无法用夹具替代的一段 |
+| `dependency` | 满足的依赖保留依赖者；**顺序无关**（依赖是过滤器而非排序规则，实测传入顺序即结果顺序） |
 
 **两个"断言宿主"的机制**，都反向验证过（改动后相关场景确实判 FAIL、runner 退出码 1）：
 
@@ -53,13 +60,15 @@
 
 ```
 fixtures/
-  load-order/   after-a, after-b, order-a, order-b      -> order / order-before
+  load-order/   after-a, after-b, order-a, order-b       -> order / order-before
+                dep-base, dep-needs-base                 -> dependency（满足的依赖）
   failures/     duplicate-a/b, missing-dep, cycle-a/b,
                 incompatible-a/b                         -> 对应失败场景
-                broken-pack, bad-patch                   -> 预期失败场景
-  invalid/      invalid-root                            -> 预期失败场景
-  patches/      patches                                 -> 补丁/条件类型矩阵
-  cross-patch/  base（提供数据）, overlay（补丁指向 base）  -> cross-patch
+                broken-pack, bad-patch, bad-patch-type,
+                bad-patch-kind, replace-patch            -> 预期失败场景
+  invalid/      invalid-root                             -> 预期失败场景
+  patches/      patches                                  -> 补丁/条件类型矩阵（11 个补丁文件 + 2 个数据文件）
+  cross-patch/  base（提供数据）, overlay（补丁指向 base）   -> cross-patch
 ```
 
 每个夹具都**被某个场景使用**，无死夹具；夹具目录名与其 mod id 一致。
@@ -151,7 +160,7 @@ fixtures/
 | 3 | `LoadPatches` 不包 `SerializationException`，异常契约不一致 | `bad-patch` 曾抛 `SerializationException` | ✅ **已修复** —— 按 `Metadata.Load` 的同一形状兜底；现在抛 `ModLoadException` |
 | 4 | `Before`/`After` 语义与文档注释相反 | `order`/`order-before` 的 `INPUT`/`ORDER` 对比 | ✅ **已修复** —— `SortModMetadata` 建的是"后继"图，而 `TopologicalSort` 的 `dependencies` 参数要求的是"前驱"；交换两条边即符合文档 |
 | 5 | 同进程**第二次** `LoadMods` 抛未处理的 `ArgumentException`（重复键） | `reload` 场景曾输出 `RELOAD-SECOND-THREW:ArgumentException` | ✅ **已修复**（`fix-duplicate-id-on-reload`）—— 查重现在同时看 `ModLoader.LoadedMods`，跨调用重复走既有的"记录 `Duplicate ID` 并跳过"路径；现为 `RELOAD-SECOND:threw=none mods=0` |
-| 6 | **`NodeReplacePatch` 对任何实际用法都抛异常** | 给 `patches` 场景加该类型后实测：`ArgumentException: The node to be inserted is from a different document context` | ⏳ **待处理**（本轮扩覆盖新查出）—— `Replacement` 是**补丁文件那个文档**里的节点，却被直接 `InsertAfter`/`PrependChild` 进**数据文档**；`XmlNode` 拒绝跨文档插入。`NodeAddPatch` 能用说明它追加前做了导入，`NodeReplacePatch` 漏了这一步。**也就是说这个补丁类型从未工作过**，而补丁文件与 mod 数据永远是不同文档 —— 没有任何用法能绕开 |
+| 6 | **`NodeReplacePatch` 对任何实际用法都抛异常** | `replace-patch` 场景钉住：`ArgumentException: The node to be inserted is from a different document context` | ⏳ **待处理，但已被测试钉住**（`widen-coverage`）—— `Replacement` 是**补丁文件那个文档**里的节点，却被直接 `InsertAfter`/`PrependChild` 进**数据文档**；`XmlNode` 拒绝跨文档插入。`NodeAddPatch` 能用说明它追加前做了导入，`NodeReplacePatch` 漏了这一步。**这个补丁类型从未工作过**，而补丁文件与 mod 数据永远是不同文档 —— 没有任何用法能绕开。现由预期失败场景 `replace-patch` 断言其失败消息；修复该类型会令该场景转红并指出变更点 |
 
 **缺陷 4 的根因值得记住**：`SortModMetadata` 的图按其注释是"在元素**之后**加载的节点"，而 `TopologicalSort` 的选择器语义是"**先于**元素加载的节点"（它先递归访问依赖，才把元素入列）。两者相反 —— 所以这不是"两边写反了"，而是**图的约定与排序器参数的约定不一致**。
 

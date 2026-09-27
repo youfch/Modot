@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The satisfied counterpart of failures/missing-dep. That fixture covers the mod being dropped when its
+  dependency is absent; this one covers the ordinary case of a dependency that is met - the main path, and one
+  nothing else exercised.
+-->
+<Mod>
+  <Id>dep-needs-base</Id>
+  <Name>Dep Needs Base</Name>
+  <Author>Modot e2e</Author>
+  <Dependencies Type="System.Collections.Generic.IEnumerable&lt;System.String&gt;">
+    <item>dep-base</item>
+  </Dependencies>
+</Mod>

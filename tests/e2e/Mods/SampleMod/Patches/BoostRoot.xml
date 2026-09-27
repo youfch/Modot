@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Untargeted, so it lands on the data root: look for patched-by-sample="yes" on <Data>. -->
+<Godot.Modding.Patching.AttributeSetPatch>
+  <Attribute>patched-by-sample</Attribute>
+  <Value>yes</Value>
+</Godot.Modding.Patching.AttributeSetPatch>

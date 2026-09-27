@@ -80,12 +80,19 @@ $scenarios = @(
     @{ Name = 'bad-patch-type'; Dirs = @((Join-Path $failuresDir 'bad-patch-type')); ExpectFailure = $true },
     # The third patch-failure shape: the type deserializes and simply is not an IPatch. ExpectOutput pins
     # which branch of Mod.LoadPatches produced the failure, which the wrapped branch cannot.
-    @{ Name = 'bad-patch-kind'; Dirs = @((Join-Path $failuresDir 'bad-patch-kind')); ExpectFailure = $true; ExpectOutput = 'Invalid patch at' }
+    @{ Name = 'bad-patch-kind'; Dirs = @((Join-Path $failuresDir 'bad-patch-kind')); ExpectFailure = $true; ExpectOutput = 'Invalid patch at' },
+    # Pins the NodeReplacePatch defect: it throws for every real use, so this expects the failure and asserts
+    # the message - which is what makes the defect visible instead of merely documented.
+    @{ Name = 'replace-patch'; Dirs = @((Join-Path $failuresDir 'replace-patch')); ExpectFailure = $true; ExpectOutput = 'different document context' }
     # The same mod loaded twice in one process: measures what the second load does to the first load's data.
     # ExpectOutput asserts the reason, which lives in the log rather than in the return value.
     @{ Name = 'reload'; Dirs = @($modDir); ExpectOutput = 'Duplicate ID' },
     # Crosses two filesystem roots, which no fixture can do; ignores its directory argument.
-    @{ Name = 'directories'; Dirs = @($modDir) }
+    @{ Name = 'directories'; Dirs = @($modDir) },
+    # The satisfied dependency, passed in the reverse order of the dependency it declares.
+    @{ Name = 'dependency'; Dirs = @((Join-Path $loadOrderDir 'dep-needs-base'), (Join-Path $loadOrderDir 'dep-base')) },
+    # The logger, in the engine because its file path, lazy open and batched flush are all engine-bound.
+    @{ Name = 'logging'; Dirs = @($modDir) }
 )
 
 if ($Scenario) {

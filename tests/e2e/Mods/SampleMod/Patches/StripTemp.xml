@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Removes the temp attribute from every Item that has one, so sample-shield loses it. -->
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@temp]</Targets>
+  <Patch Type="Godot.Modding.Patching.AttributeRemovePatch">
+    <Attribute>temp</Attribute>
+  </Patch>
+</Godot.Modding.Patching.TargetedPatch>

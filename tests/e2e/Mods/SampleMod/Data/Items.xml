@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Items>
+  <Item id="sample-sword" damage="10"/>
+  <Item id="sample-shield" block="5" temp="remove-me"/>
+</Items>

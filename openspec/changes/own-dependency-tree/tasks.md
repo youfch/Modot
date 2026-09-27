@@ -56,3 +56,11 @@
   `[Error] at 16:34:49:353 - Godot.Modding.ModLoadException: Could not load mod at …: Incompatible with other loaded mods`
   —— 证明 `FileAccess.Open("user://Log.txt", Write)` 与 `StoreLine` 在 Godot 4.7.2 headless 下可用、条目格式未变，且**惰性打开生效**（文件在首次写入时才创建，而非类型初始化）。`GD.PushError` 的输出同样在 e2e 输出中可见（栈顶指向 `src\GDLogger\Log.cs`）。
   **仍未覆盖**：`NodeSerializer` 的带子节点 `Node` 往返、`Log.Write(string)`/`Warning`、`EntryWritten` 事件、`GD.PushWarning` 的输出 —— 这些需要额外的 fixture，尚未建立，**不得视为已验证**。
+
+
+## 7.4 的前提修正与拆分（`widen-coverage` 期间）
+
+- 任务正文提到的 `EntryWritten` 事件在 vendored GDLogger 里**不存在**。真实公开面是 `Write`、`Error(string)`、`Error(Exception)`、`Entry`、`MessageSeverity`。
+- 它列的四件事里**一件已完成**：日志器的文件写入。`tests/e2e` 的 `logging` 场景覆盖 `user://Log.txt` 的首次写入、批量刷出与内容完整性（实测 `LOG:bytes=630`）。
+- 余下三件仍在，且各有归属：`NodeSerializer` 的带子节点往返 -> `widen-coverage` 任务 3.x；`GD.Print`/`GD.PushWarning`/`GD.PushError` 的输出 -> 尚无变更承接，需另立或并入；`EntryWritten` -> **删除该要求**（对象不存在）。
+- 因此本任务**不能简单关闭**：它把四件互不相关的事写成了一条，只有其中一件条件成熟。这正是本仓库反复出现的同一类问题（任务描述里的想当然）。

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The one worth watching: it passes only if Config exists (which it does only because the second data file was
+  merged in) and alpha is loaded (which it is only because this mod declares the dependency). So a single
+  attribute - reward="granted" - is evidence that the data merge, the dependency, and the condition all worked.
+-->
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.AndCondition">
+    <Conditions>
+      <item Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+        <XPath>Config</XPath>
+      </item>
+      <item Type="Godot.Modding.Patching.Conditions.ModLoadedCondition">
+        <ModId>alpha</ModId>
+      </item>
+    </Conditions>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>reward</Attribute>
+    <Value>granted</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>reward</Attribute>
+    <Value>denied</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

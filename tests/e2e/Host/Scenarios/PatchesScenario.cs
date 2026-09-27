@@ -64,6 +64,15 @@ public partial class Host
         this.Check(root.SelectSingleNode("//Item[@id='z']") is null,
             "NodeRemovePatch removed the element it targeted");
 
+        // Two Data files are merged into one document, each file's root becoming a child of the data root. Only
+        // presence is asserted: GetFiles does not promise an order, so pinning one would be pinning noise.
+        this.Check(root.SelectSingleNode("Items") is not null,
+            "the first data file's root is present after the merge");
+        this.Check(root.SelectSingleNode("Extra") is not null,
+            "the second data file's root was merged in as well");
+        this.Check(root.SelectSingleNode("Extra/Marker") is not null,
+            "the merged content is intact, not just the second file's root element");
+
         // NodeReplacePatch is deliberately not asserted here. Adding it produced
         // ArgumentException: The node to be inserted is from a different document context - its Replacement
         // node belongs to the patch file's document while it is inserted into the data document, and XmlNode

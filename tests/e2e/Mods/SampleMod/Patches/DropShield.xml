@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Removes sample-shield entirely; sample-sword is left alone. -->
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@id='sample-shield']</Targets>
+  <Patch Type="Godot.Modding.Patching.NodeRemovePatch"/>
+</Godot.Modding.Patching.TargetedPatch>

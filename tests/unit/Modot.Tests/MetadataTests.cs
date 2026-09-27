@@ -139,6 +139,76 @@ namespace Modot.Tests
             }
         }
 
+        // Mod.xml edge shapes. These sit in the unit layer because Metadata.Load is engine-free, so the cheap layer
+        // can carry them; anything that needs LoadMods itself to misbehave belongs in the e2e suite instead.
+
+        [Fact]
+        public void RejectsMetadataWithoutANameOrAuthor()
+        {
+            // Measured, and the opposite of what the first version of this test asserted: the serializer treats
+            // the members Metadata declares as mandatory, so a Mod.xml missing any of them is rejected rather
+            // than loaded with nulls. Worth pinning precisely because the library is stricter than it looks.
+            Assert.Throws<ModLoadException>(() => LoadFrom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Mod>
+                  <Id>probe</Id>
+                </Mod>
+                """));
+        }
+
+        [Fact]
+        public void RejectsUnknownElements()
+        {
+            // Also measured, also stricter than expected: an element matching no member is an error rather than
+            // something ignored, so a typo in Mod.xml is reported instead of quietly dropping a setting.
+            Assert.Throws<ModLoadException>(() => LoadFrom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Mod>
+                  <Id>probe</Id>
+                  <Name>Probe</Name>
+                  <Author>probe</Author>
+                  <SomethingUnknown>ignored</SomethingUnknown>
+                </Mod>
+                """));
+        }
+
+        [Fact]
+        public void ReportsMalformedXml()
+        {
+            // Unlike the two above this one cannot be accepted: the document does not parse, and Load reports
+            // that as a ModLoadException like any other load failure. An unclosed element is the cheapest way to
+            // be sure the parser is what fails rather than anything downstream.
+            Assert.Throws<ModLoadException>(() => LoadFrom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Mod>
+                  <Id>probe</Id>
+                """));
+        }
+
+        /// <summary>
+        /// Loads metadata from the given XML through a throwaway directory.
+        /// </summary>
+        /// <remarks>
+        /// A directory rather than a string because this exercises the real entry point, Metadata.Load - a
+        /// helper that deserialized the text directly would skip the file handling and the exception wrapping
+        /// that Load is responsible for, which is exactly what the malformed case needs to see.
+        /// </remarks>
+        private static Mod.Metadata LoadFrom(string modXml)
+        {
+            string directory = Path.Combine(Path.GetTempPath(), $"modot-tests-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, "Mod.xml"), modXml);
+
+            try
+            {
+                return Mod.Metadata.Load(directory);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
         private static string CreateModDirectory()
         {
             string directory = Path.Combine(Path.GetTempPath(), $"modot-tests-{Guid.NewGuid():N}");
