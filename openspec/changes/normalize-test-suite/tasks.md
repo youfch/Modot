@@ -17,8 +17,8 @@
 
 ## 3. Host 拆分
 
-- [ ] 3.1 把各场景方法移入 `tests/e2e/Host/Scenarios/<场景>Scenario.cs` 的 `partial class Host` 分片，`Host.cs` 只保留入口（参数解析、默认场景、收口）与 `Check`/`Fail`；验证 `Host.cs` 行数降到 200 行以内
-- [ ] 3.2 验证拆分后 `dotnet build Modot.sln` 退出码为 0、且全部既有场景仍 PASS（Godot 的脚本绑定未受影响）
+- [x] 3.1 把各场景方法移入 `tests/e2e/Host/Scenarios/<场景>Scenario.cs` 的 `partial class Host` 分片，`Host.cs` 只保留入口（参数解析、默认场景、收口）与 `Check`/`Fail`；验证 `Host.cs` 行数降到 200 行以内
+- [x] 3.2 验证拆分后 `dotnet build Modot.sln` 退出码为 0、且全部既有场景仍 PASS（Godot 的脚本绑定未受影响）
 
 ## 4. runner 的"预期失败"机制
 
@@ -38,20 +38,20 @@
   - ⚠️ **实测修正：本任务前提不成立**。`Metadata.IsValid`（`private` + `[AfterDeserialization]`）**从未被执行** —— `Serializer.cs:217` 的钩子查找走 `GetAllMembers` 的默认 `BindingFlags.Default`（即 0，**只匹配 public 成员**），而同文件 258/283 行的属性/字段扫描显式传了含 NonPublic 的标志。这正是"列表能正常反序列化、只有校验被跳过"的原因，故非法元数据被**静默接受**，`IsValid` 是**死代码**。三个用例已改为**照实固化"接受"**（而非断言抛异常），以便将来修复时故意失败；本次**未改 `src/`**
 - [x] 5.5 若 5.3 实测出 `LoadMod` 会对自己数据**重复应用补丁**，如实断言该行为并作为独立议题记录；**不得**顺手修改 `src/Modot`（属另一变更）
   - 实测成立：`APPLIED:2`。成因是 `LoadMod` 先 `loadedMods.Add(mod)`、再在汇总"待打补丁的根节点"时 `.Append(mod.Data?.DocumentElement)`，同一根节点入列两次。已按实测值 2 断言
-- [ ] 5.6 为上述两个实测缺陷立案（独立变更）：(a) `Metadata.IsValid` 成死代码／非法元数据被静默接受，修复点应在**钩子查找**（`Serializer.cs:217` 传显式绑定标志），而**不是**把 `IsValid` 改成 public；(b) `LoadMod` 对自己数据重复应用补丁。两者都改 `src/` 的产品行为，本次仅固化现状
+- [x] 5.6 为上述两个实测缺陷立案（独立变更）：(a) `Metadata.IsValid` 成死代码／非法元数据被静默接受，修复点应在**钩子查找**（`Serializer.cs:217` 传显式绑定标志），而**不是**把 `IsValid` 改成 public；(b) `LoadMod` 对自己数据重复应用补丁。两者都改 `src/` 的产品行为，本次仅固化现状
 
 ## 6. 文档与接线同步
 
 - [x] 6.1 更新 `Modot.sln` 中 `Modot.Tests` 的项目路径为 `tests\unit\Modot.Tests\Modot.Tests.csproj`；验证 `dotnet build Modot.sln` 退出码为 0
-- [ ] 6.2 更新 `.gitignore` 中的 e2e 产物路径（`tests/e2e/Mods/*/Assemblies/`、`tests/e2e/Mods/*/*.sln`、`export_presets.cfg` 例外）；验证 `git check-ignore` 双向仍正确（产物被忽略、源码与夹具不被忽略）
+- [x] 6.2 更新 `.gitignore` 中的 e2e 产物路径（`tests/e2e/Mods/*/Assemblies/`、`tests/e2e/Mods/*/*.sln`、`export_presets.cfg` 例外）；验证 `git check-ignore` 双向仍正确（产物被忽略、源码与夹具不被忽略）
 - [x] 6.3 更新 `tests/README.md`：层结构（`unit/` 与 `e2e/`）、**`e2e` 是 harness 而非测试项目**、夹具分组表、新场景清单、脚本新名、以及"刻意未覆盖"清单
 - [x] 6.4 更新 `AGENTS.md`：层目录、测试命令（新脚本名与 `tests/unit/...` 路径）、以及"`e2e` 是 harness"这一点
-- [ ] 6.5 逐条实跑 `tests/README.md` 与 `AGENTS.md` 里给出的命令，验证可直接复制运行（无失效路径）
+- [x] 6.5 逐条实跑 `tests/README.md` 与 `AGENTS.md` 里给出的命令，验证可直接复制运行（无失效路径）
 
 ## 7. 验证收口
 
-- [ ] 7.1 `dotnet test tests/unit/Modot.Tests` 退出码为 0，且断言数大于 10（含新增的元数据拒绝用例）
-- [ ] 7.2 `./tests/e2e/Invoke-E2E.ps1` 退出码为 0，所有场景 PASS（含新增的 `order-before`、`invalid-root`、`cross-patch`、`no-assemblies`、`single-load`）
-- [ ] 7.3 `dotnet build Modot.sln -c Release --no-incremental` 退出码为 0，且未引入新警告
-- [ ] 7.4 全仓搜索 `Scn/`、`run.ps1`、`assemble.ps1`、`tests/Modot.Tests`，验证只在历史记录或无关处出现，没有遗留的旧路径引用
-- [ ] 7.5 `openspec validate --all --strict` 通过
+- [x] 7.1 `dotnet test tests/unit/Modot.Tests` 退出码为 0，且断言数大于 10（含新增的元数据拒绝用例）
+- [x] 7.2 `./tests/e2e/Invoke-E2E.ps1` 退出码为 0，所有场景 PASS（含新增的 `order-before`、`invalid-root`、`cross-patch`、`no-assemblies`、`single-load`）
+- [x] 7.3 `dotnet build Modot.sln -c Release --no-incremental` 退出码为 0，且未引入新警告
+- [x] 7.4 全仓搜索 `Scn/`、`run.ps1`、`assemble.ps1`、`tests/Modot.Tests`，验证只在历史记录或无关处出现，没有遗留的旧路径引用
+- [x] 7.5 `openspec validate --all --strict` 通过

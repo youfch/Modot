@@ -40,7 +40,12 @@
 | `broken-pack` | **预期失败**：`.pck` 不是资源包时抛 `ModLoadException` |
 | `bad-patch` | **预期失败**：补丁 XML 不能被解析成 `IPatch` 时必须失败 |
 
-**"预期失败"机制**：场景表里声明 `ExpectFailure = $true` 后，宿主**必须以非零退出码结束**才算通过；若意外以 0 结束则判该场景失败。这套机制反向验证过（去掉标记后相关场景确实判 FAIL、runner 退出码 1）。
+**两个"断言宿主"的机制**，都反向验证过（改动后相关场景确实判 FAIL、runner 退出码 1）：
+
+- **`ExpectFailure = $true`**（断言**退出码**）：宿主**必须以非零退出码结束**才算通过；若意外以 0 结束则判失败
+- **`ExpectOutput = '<文本>'`**（断言**日志**）：宿主输出**必须包含**该文本，否则判失败。它补的是 `ExpectFailure` 的盲区 —— "没加载到东西"可能是**别的原因**造成的，只断言结果会放过这种回归；断言语义是"还要说清楚为什么"
+
+⚠️ **runner 的 `$ErrorActionPreference` 在调用宿主前后会临时放宽**：宿主把错误写到 **stderr**（mod 加载失败本就是正常结局），而 `Stop` 下 PowerShell 会把被重定向的 native stderr 当成**终止性错误**，直接中止整轮运行 —— 表现为 runner 在第一个会打错误日志的场景处静默中断。
 
 **`watch`（不在 runner 里）**：**无参数运行时的默认场景**，也是从编辑器按 F5 会跑到的那个。加载 mod 后**不退出**，打印其 `Data`（能直接看到补丁效果）、程序集数与补丁数，并把打包的场景挂进场景树（附相机与光源，窗口里真看得见），供在编辑器里检查远程场景树。它**永不退出**，所以**不能**加进 runner（会把 runner 挂住）。
 
@@ -113,7 +118,7 @@ fixtures/
 | 2 | `LoadMod` 对自己数据**重复应用补丁**（同一根节点入列两次） | `APPLIED:2` | ✅ **已修复** —— 去掉多余的 `.Append`；现为 `APPLIED:1` |
 | 3 | `LoadPatches` 不包 `SerializationException`，异常契约不一致 | `bad-patch` 曾抛 `SerializationException` | ✅ **已修复** —— 按 `Metadata.Load` 的同一形状兜底；现在抛 `ModLoadException` |
 | 4 | `Before`/`After` 语义与文档注释相反 | `order`/`order-before` 的 `INPUT`/`ORDER` 对比 | ✅ **已修复** —— `SortModMetadata` 建的是"后继"图，而 `TopologicalSort` 的 `dependencies` 参数要求的是"前驱"；交换两条边即符合文档 |
-| 5 | 同进程**第二次** `LoadMods` 抛未处理的 `ArgumentException`（重复键） | `reload` 场景：`RELOAD-SECOND-THREW:ArgumentException` | ⏳ **待处理**（本轮新查出）—— `LoadModMetadata` 的查重只看**本次调用内**的目录，从不查已加载注册表，于是重复 ID 直到 `loadedMods.Add` 才撞上，绕过既有的 `ModLoadException("Duplicate ID")` 契约 |
+| 5 | 同进程**第二次** `LoadMods` 抛未处理的 `ArgumentException`（重复键） | `reload` 场景曾输出 `RELOAD-SECOND-THREW:ArgumentException` | ✅ **已修复**（`fix-duplicate-id-on-reload`）—— 查重现在同时看 `ModLoader.LoadedMods`，跨调用重复走既有的"记录 `Duplicate ID` 并跳过"路径；现为 `RELOAD-SECOND:threw=none mods=0` |
 
 **缺陷 4 的根因值得记住**：`SortModMetadata` 的图按其注释是"在元素**之后**加载的节点"，而 `TopologicalSort` 的选择器语义是"**先于**元素加载的节点"（它先递归访问依赖，才把元素入列）。两者相反 —— 所以这不是"两边写反了"，而是**图的约定与排序器参数的约定不一致**。
 
@@ -130,6 +135,25 @@ fixtures/
 | 剩余补丁/条件类型的语义穷尽 | 同上（矩阵只要求每型至少一次） |
 | `DirectoryExtensions` 的遍历/递归/跨根复制 | 同上（需 `res://` -> `user://` 跨根场景） |
 | `Node` 序列化 | 需要在引擎中构造节点树，未纳入范围 |
+
+## 包消费验证（`Test-PackageConsumption.ps1`）
+
+其余所有测试都用 `ProjectReference` 引用 `src/Modot`，所以**打包产物本身没有任何测试在消费它** —— 包能编译、能加载，但"它是不是当前源码"没人验证。这个脚本补上这一环：
+
+```powershell
+./tests/e2e/Test-PackageConsumption.ps1                              # 默认 D:/GNuget 的 Modot 3.0.1
+./tests/e2e/Test-PackageConsumption.ps1 -Version 3.0.2 -DropDirectory 'D:/GNuget'
+```
+
+它做三件事：
+
+1. 从本机 drop 目录（环境变量 `MODOT_NUGET_DROP`，默认 `D:/GNuget`）还原 `Modot` 包 —— 源写进**临时 nuget.config**，因为把 feed URL 当命令行参数交给 `dotnet` 会被原生参数处理弄坏（斜杠被改写、被当成本地路径），而把 `D:/GNuget` 写进版本控制文件又会变成机器相关路径
+2. 断言解析出的依赖图与打包时的 **nuspec** 一致：`Modot` 自身版本、两个 vendored 包、`GodotSharp`，且**不含** `GodotSharpEditor`。**必须对 nuspec 断言而不是对消费方的解析结果** —— 消费方自己就是 Godot.NET.Sdk 项目，Debug 配置下 SDK **本来就会**引用 `GodotSharpEditor`，对着解析结果查会把健康包判成坏包
+3. 把**整轮场景**跑在 `PackageConsumer/` 这个引用包的 Godot 项目里（`Invoke-E2E.ps1 -HostProjectDirectory PackageConsumer`）
+
+**当前已知状态**：对 `Modot.3.0.1` 跑是 **16/17** —— `reload` 失败，因为 **3.0.1 早于缺陷 5 的修复**，包里那份 DLL 仍是旧行为（第二次 `LoadMods` 抛 `ArgumentException`）。这**正是该检查存在的意义**：它把"产物 vs 源码"的差异暴露出来。要 17/17 需用含全部修复的源码重新打包；**日常开发按源码运行即可**，这一项只在外发前有意义。
+
+**`PackageConsumer/`** 是从 `Host/` 复制、并把 `Host.csproj` 的 `ProjectReference` 换成 `PackageReference` 得到的。文件名保留 `Host.*` 是刻意的 —— `project.godot` 的 `assembly_name` 与场景装配依赖它。构建产物落在 `.godot/mono/temp/`（Godot.NET.Sdk 的重定向，也正是"宿主必须 Debug 构建"那条约定的来源），已由全局忽略规则覆盖。
 
 ## 维护约定
 

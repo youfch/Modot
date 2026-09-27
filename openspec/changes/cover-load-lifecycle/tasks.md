@@ -12,8 +12,8 @@
 
 ## 2. 启动方法的两种形态（阶段 ⑥）
 
-- [ ] 2.1 在 `tests/e2e/Mods/AlphaMod/AlphaMod.cs` 增加一个带参 `[ModStartup]` 方法，把参数写进**另一个** marker 文件；`alpha` 场景断言两个 marker 都存在且带参 marker 的内容等于声明时给出的参数
-- [ ] 2.2 `no-assemblies` 场景扩展为断言**两个** marker 都不存在（同一开关关闭两种形态）
+- [x] 2.1 在 `tests/e2e/Mods/AlphaMod/AlphaMod.cs` 增加一个带参 `[ModStartup]` 方法，把参数写进**另一个** marker 文件；`alpha` 场景断言两个 marker 都存在且带参 marker 的内容等于声明时给出的参数
+- [x] 2.2 `no-assemblies` 场景扩展为断言**两个** marker 都不存在（同一开关关闭两种形态）
 
 ## 3. 重复加载的静态状态（阶段 ⑦）
 
@@ -39,3 +39,11 @@
 - [ ] 6.3 `dotnet build Modot.sln -c Release --no-incremental` 退出码为 0，且未引入新警告
 - [ ] 6.4 逐行核对生命周期清单：为每段生命周期指明其载体（场景或单测），无一段空缺
 - [ ] 6.5 `openspec validate --all --strict` 通过
+
+## 7. 包消费验证（新识别：产物本身此前无人消费）
+
+- [x] 7.1 建 `tests/e2e/PackageConsumer/`（从 `Host/` 复制，`Host.csproj` 的 `ProjectReference` 改为 `PackageReference Modot`）与 `tests/e2e/Test-PackageConsumption.ps1`：从 drop 目录还原包、断言 nuspec 依赖图、并把整轮场景跑在消费方项目里
+- [x] 7.2 `Invoke-E2E.ps1` 加 `-HostProjectDirectory` 参数，使同一套场景可在另一个宿主项目（消费方）里运行
+- [x] 7.3 对 `Modot.3.0.1` 实测：依赖图与 nuspec 全部正确（含 `GodotSharp`、不含 `GodotSharpEditor` → 确认 Release 打包），**16/17 场景 PASS**；`reload` 失败的原因是**该包早于缺陷 5 的修复** —— 即"产物与源码不一致"被检查抓出
+- [ ] 7.4 用含全部修复的源码重新打包并复跑，验证 17/17。**当前按用户决定推迟**（不重新打包，日常按源码运行）；这是一项"外发前"检查
+- [x] 7.5 把 7.1 的机制写进 `tests/README.md`（含"必须对 nuspec 断言而非消费方解析结果"的原因，以及 3.0.1 的 16/17 已知状态）—— 已完成于本次文档更新，与实现一并复核

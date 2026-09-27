@@ -16,7 +16,10 @@
 param(
     [string]$Godot = $env:MODOT_GODOT,
     [string]$Configuration = 'Debug',
-    [string]$Scenario = ''
+    [string]$Scenario = '',
+    # Which Godot project runs the scenarios. The default is the harness host; pointing it at the package
+    # consumer runs the same suite against the packed NuGet package instead of the source projects.
+    [string]$HostProjectDirectory = 'Host'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -31,7 +34,7 @@ if (-not (Test-Path -LiteralPath $Godot)) {
 
 # $PSScriptRoot is tests/e2e
 $e2eDir = $PSScriptRoot
-$hostDir = Join-Path $e2eDir 'Host'
+$hostDir = Join-Path $e2eDir $HostProjectDirectory
 $modDir = Join-Path $e2eDir 'Mods\AlphaMod'
 $fixturesDir = Join-Path $e2eDir 'fixtures'
 $loadOrderDir = Join-Path $fixturesDir 'load-order'
@@ -76,7 +79,8 @@ $scenarios = @(
     @{ Name = 'bad-patch'; Dirs = @((Join-Path $failuresDir 'bad-patch')); ExpectFailure = $true },
     @{ Name = 'bad-patch-type'; Dirs = @((Join-Path $failuresDir 'bad-patch-type')); ExpectFailure = $true },
     # The same mod loaded twice in one process: measures what the second load does to the first load's data.
-    @{ Name = 'reload'; Dirs = @($modDir) }
+    # ExpectOutput asserts the reason, which lives in the log rather than in the return value.
+    @{ Name = 'reload'; Dirs = @($modDir); ExpectOutput = 'Duplicate ID' }
 )
 
 if ($Scenario) {
@@ -90,8 +94,17 @@ $failed = 0
 foreach ($item in $scenarios) {
     Write-Host ""
     Write-Host "=== scenario: $($item.Name) ==="
-    & $Godot --headless --path $hostDir -- $item.Name @($item.Dirs)
+    # Captured rather than streamed so the output can be asserted below; it is written back out either way,
+    # because the host's log is most of the value of a run.
+    # ErrorActionPreference is relaxed around the call on purpose: the host logs errors to stderr (a mod that
+    # fails to load is a normal outcome here), and with 'Stop' in effect PowerShell treats that redirected
+    # stderr as a terminating error and aborts the whole run at the first such scenario.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $output = & $Godot --headless --path $hostDir -- $item.Name @($item.Dirs) 2>&1
     $code = $LASTEXITCODE
+    $ErrorActionPreference = $previousPreference
+    $output | ForEach-Object { Write-Host $_ }
 
     # A scenario flagged ExpectFailure passes only when the host actually failed: that is how the suite
     # proves the host surfaces a load error instead of swallowing it and reporting success.
@@ -101,6 +114,16 @@ foreach ($item in $scenarios) {
         $failed += 1
         $wanted = if ($expectFailure) { 'nonzero' } else { '0' }
         Write-Host "SCENARIO FAILED: $($item.Name) (exit $code, expected $wanted)"
+    }
+
+    # ExpectOutput asserts what the host said, not just whether it succeeded: a scenario that loads nothing
+    # for the wrong reason would otherwise pass.
+    if ($item.ContainsKey('ExpectOutput')) {
+        $joined = $output -join [Environment]::NewLine
+        if ($joined -notmatch [regex]::Escape($item.ExpectOutput)) {
+            $failed += 1
+            Write-Host "SCENARIO FAILED: $($item.Name) (output did not contain '$($item.ExpectOutput)')"
+        }
     }
 }
 

@@ -1,0 +1,19 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>default</LangVersion>
+        <!-- Workaround as Godot does not know how to properly load NuGet packages -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    <PropertyGroup>
+        <!-- Overridable so Test-PackageConsumption.ps1 can point at another version without editing this. -->
+        <ModotVersion Condition="'$(ModotVersion)' == ''">3.0.1</ModotVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- The whole point of this project: consume Modot the way a mod author would - from the package rather
+             than from the source projects - so the packaged dependency graph and the assembly's public surface
+             are what gets exercised, not the working tree. -->
+        <PackageReference Include="Modot" Version="$(ModotVersion)"/>
+    </ItemGroup>
+</Project>

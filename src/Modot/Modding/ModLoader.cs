@@ -131,7 +131,11 @@ namespace Godot.Modding
                 {
                     Log.Error(new ModLoadException(metadata.Directory, "Incompatible with other loaded mods"));
                 }
-                else if (!loadedMetadata.TryAdd(metadata.Id, metadata))
+                // The already-loaded registry is checked alongside this call's own dictionary. An ID loaded by
+                // an earlier call is just as much a duplicate as one from this call, and letting it through
+                // here would only surface later as an ArgumentException from loadedMods.Add - after the mod had
+                // been constructed, its assemblies loaded and its patches enumerated.
+                else if (ModLoader.LoadedMods.ContainsKey(metadata.Id) || !loadedMetadata.TryAdd(metadata.Id, metadata))
                 {
                     Log.Error(new ModLoadException(metadata.Directory, "Duplicate ID"));
                 }

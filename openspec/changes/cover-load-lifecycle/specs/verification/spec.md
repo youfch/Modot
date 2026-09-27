@@ -60,3 +60,15 @@
 #### Scenario: 缺陷以现状固化
 - **WHEN** 实测到与文档或契约不符的产品行为
 - **THEN** 断言记录的是**实测行为**，并在代码注释与 `tasks.md` 中说明这是缺陷、其修复属于另一变更
+
+### Requirement: Packaged artifact is consumed
+打包产物 SHALL 至少被一个检查以**消费方**的方式使用，而不只是被间接验证。
+
+#### Scenario: 以 PackageReference 消费
+- **WHEN** 一个只以 `PackageReference` 引用 `Modot` 的 Godot 项目被还原并运行
+- **THEN** 解析出的依赖图与打包时的 **nuspec** 一致（含 `GodotSharp`，且不含 `GodotSharpEditor`）
+- **AND** 同一套场景在该项目中全部通过
+
+#### Scenario: 产物与源码的差异被暴露
+- **WHEN** 包是在某些修复之前打出的
+- **THEN** 该检查以**场景失败**的形式指出差异，而不是静默通过
