@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modot", "src\Modot\Modot.cs
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modot.Tests", "tests\Modot.Tests\Modot.Tests.csproj", "{A399F433-18C5-444F-A951-8385972A0633}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modot.Tests", "tests\unit\Modot.Tests\Modot.Tests.csproj", "{A399F433-18C5-444F-A951-8385972A0633}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "e2e", "e2e", "{0EB607AC-6329-6575-AD8B-E5558B048B88}"
 EndProject

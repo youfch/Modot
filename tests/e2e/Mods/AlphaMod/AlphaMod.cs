@@ -8,7 +8,7 @@ namespace AlphaMod
     /// The code a mod ships. Used by the e2e suite to prove that a separately compiled mod assembly
     /// has its <c>[ModStartup]</c> method discovered and invoked through Modot.
     /// </summary>
-    public static class Alpha
+    public static class AlphaMod
     {
         /// <summary>
         /// Writes a marker file so the host can observe that this method really ran.

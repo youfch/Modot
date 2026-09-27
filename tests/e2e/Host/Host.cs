@@ -101,7 +101,7 @@ public partial class Host : Node3D
 
         // "watch" exists to inspect a loaded mod in the editor, so it deliberately stays alive. Every
         // other scenario is a batch check whose verdict is the exit code, so it must not be used there
-        // (run.ps1 never runs "watch": it would hang).
+        // (Invoke-E2E.ps1 never runs "watch": it would hang).
         if (scenario is "watch")
         {
             GD.Print("WATCH:staying alive - inspect the remote scene tree or the window; close it to end");
@@ -260,7 +260,7 @@ public partial class Host : Node3D
             return;
         }
 
-        const string scenePath = "res://Scn/BoxRot.tscn";
+        const string scenePath = "res://Scenes/BoxRot.tscn";
 
         this.Check(ResourceLoader.Exists(scenePath), $"the packed scene is reachable at {scenePath}");
 
@@ -287,7 +287,7 @@ public partial class Host : Node3D
     /// <summary>
     /// Loads the mod, reports what it contributed, shows its packed scene in the viewport, and then keeps
     /// running so the loaded state can be inspected in the editor's remote scene tree. It never quits, so
-    /// it is deliberately absent from run.ps1 - every scenario there terminates with an exit code.
+    /// it is deliberately absent from Invoke-E2E.ps1 - every scenario there terminates with an exit code.
     /// </summary>
     private void RunWatch(string[] modDirectories)
     {
@@ -301,7 +301,7 @@ public partial class Host : Node3D
             GD.Print($"WATCH:data={mod.Data?.OuterXml}");
         }
 
-        const string scenePath = "res://Scn/BoxRot.tscn";
+        const string scenePath = "res://Scenes/BoxRot.tscn";
         if (GD.Load<PackedScene>(scenePath) is PackedScene scene)
         {
             Node instance = scene.Instantiate();

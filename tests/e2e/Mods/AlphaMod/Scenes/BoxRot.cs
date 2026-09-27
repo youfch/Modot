@@ -1,7 +1,7 @@
 using Godot;
 
 /// <summary>
-/// The script attached to <c>Scn/BoxRot.tscn</c>.
+/// The script attached to <c>Scenes/BoxRot.tscn</c>.
 /// </summary>
 /// <remarks>
 /// Rotates continuously so the script's execution is observable on screen, and logs on ready so the e2e

@@ -9,9 +9,9 @@
 # default install path below. Override for another machine or engine version.
 #
 # Usage:
-#   ./tests/e2e/run.ps1
-#   ./tests/e2e/run.ps1 -Scenario alpha
-#   ./tests/e2e/run.ps1 -Godot 'D:\path\to\Godot_..._console.exe'
+#   ./tests/e2e/Invoke-E2E.ps1
+#   ./tests/e2e/Invoke-E2E.ps1 -Scenario alpha
+#   ./tests/e2e/Invoke-E2E.ps1 -Godot 'D:\path\to\Godot_..._console.exe'
 [CmdletBinding()]
 param(
     [string]$Godot = $env:MODOT_GODOT,
@@ -39,8 +39,8 @@ Write-Host "Godot: $Godot"
 Write-Host "Configuration: $Configuration"
 
 # Build the mod assembly and refresh the copy Modot loads. The pack is deliberately left as committed
-# here, so a test run does not rewrite it; run assemble.ps1 on its own after editing assets.
-& (Join-Path $PSScriptRoot 'assemble.ps1') -Godot $Godot -Configuration $Configuration -SkipPack
+# here, so a test run does not rewrite it; run Update-ModAssets.ps1 on its own after editing assets.
+& (Join-Path $PSScriptRoot 'Update-ModAssets.ps1') -Godot $Godot -Configuration $Configuration -SkipPack
 
 dotnet build (Join-Path $hostDir 'Host.csproj') -c $Configuration -v:q
 if ($LASTEXITCODE -ne 0) {

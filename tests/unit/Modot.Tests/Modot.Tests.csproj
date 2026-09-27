@@ -12,6 +12,6 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Modot\Modot.csproj"/>
+        <ProjectReference Include="..\..\..\src\Modot\Modot.csproj"/>
     </ItemGroup>
 </Project>

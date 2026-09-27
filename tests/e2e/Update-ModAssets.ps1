@@ -3,14 +3,14 @@
 #
 # Use this before running the Host from the editor, because the editor builds the C# solution into
 # .godot/mono/temp/bin/ but does NOT refresh Assemblies/ - Modot reads that copy, so without this step
-# a code change would be loaded stale. run.ps1 calls this same script with -SkipPack.
+# a code change would be loaded stale. Invoke-E2E.ps1 calls this same script with -SkipPack.
 #
 # NOTE: This file is deliberately ASCII-only. The repository mandates UTF-8 without BOM, and Windows
 # PowerShell 5.1 misreads non-ASCII characters in BOM-less .ps1 files as ANSI, which breaks the parser.
 #
 # Usage:
-#   ./tests/e2e/assemble.ps1                    # code + pack
-#   ./tests/e2e/assemble.ps1 -SkipPack          # code only
+#   ./tests/e2e/Update-ModAssets.ps1                    # code + pack
+#   ./tests/e2e/Update-ModAssets.ps1 -SkipPack          # code only
 [CmdletBinding()]
 param(
     [string]$Godot = $env:MODOT_GODOT,
