@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OrCondition succeeds if *any* condition does. Same two branches as the And fixture, opposite expectation:
+  together the pair pins the difference between the two, which a single fixture could not.
+-->
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.OrCondition">
+    <Conditions>
+      <item Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+        <XPath>Items</XPath>
+      </item>
+      <item Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+        <XPath>NoSuchNode</XPath>
+      </item>
+    </Conditions>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>any</Attribute>
+    <Value>hit</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>any</Attribute>
+    <Value>miss</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

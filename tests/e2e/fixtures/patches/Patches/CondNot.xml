@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NotCondition succeeds if the condition it wraps fails, and the condition it wraps here checks for a mod that
+  is not loaded. So this one fixture covers two things at once: the negation, and ModLoadedCondition reporting
+  a negative - the pair of branches is completed by CondModLoaded, which asks about a mod that is loaded.
+-->
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.NotCondition">
+    <Condition Type="Godot.Modding.Patching.Conditions.ModLoadedCondition">
+      <ModId>no-such-mod</ModId>
+    </Condition>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>neg</Attribute>
+    <Value>hit</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>neg</Attribute>
+    <Value>miss</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

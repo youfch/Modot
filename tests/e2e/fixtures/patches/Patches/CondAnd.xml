@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AndCondition succeeds only if *all* of its conditions do. One branch exists and the other does not, so the
+  expected outcome is the failure branch - which is what tells "all" apart from "any".
+-->
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.AndCondition">
+    <Conditions>
+      <item Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+        <XPath>Items</XPath>
+      </item>
+      <item Type="Godot.Modding.Patching.Conditions.NodeExistsCondition">
+        <XPath>NoSuchNode</XPath>
+      </item>
+    </Conditions>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>all</Attribute>
+    <Value>hit</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>all</Attribute>
+    <Value>miss</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

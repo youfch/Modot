@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Both patches set the same attribute, so the surviving value pins the order they were applied in: the last
+  one wins. A MultiPatch that applied them out of order, or only applied the first, would show up here.
+-->
+<Godot.Modding.Patching.MultiPatch>
+  <Patches>
+    <item Type="Godot.Modding.Patching.AttributeSetPatch">
+      <Attribute>multi</Attribute>
+      <Value>one</Value>
+    </item>
+    <item Type="Godot.Modding.Patching.AttributeSetPatch">
+      <Attribute>multi</Attribute>
+      <Value>two</Value>
+    </item>
+  </Patches>
+</Godot.Modding.Patching.MultiPatch>

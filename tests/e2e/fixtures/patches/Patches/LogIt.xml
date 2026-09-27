@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LogPatch wraps another patch and logs the node before and after applying it. The assertion is on the wrapped
+  patch's effect, not on the log: that is what tells a working wrapper apart from one that swallowed its patch.
+-->
+<Godot.Modding.Patching.LogPatch>
+  <Patch Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>logged</Attribute>
+    <Value>yes</Value>
+  </Patch>
+</Godot.Modding.Patching.LogPatch>

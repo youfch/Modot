@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ModLoadedCondition asks whether an ID is in LoadedMods. The ID here is the mod's own: LoadMods registers a
+  mod before running its patches, so a mod can see itself while its own patches are being applied. Asserting
+  that is deliberate - the same registration order is what fixed LoadMod's duplicate application.
+-->
+<Godot.Modding.Patching.ConditionalPatch>
+  <Condition Type="Godot.Modding.Patching.Conditions.ModLoadedCondition">
+    <ModId>patches</ModId>
+  </Condition>
+  <Success Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>modloaded</Attribute>
+    <Value>hit</Value>
+  </Success>
+  <Failure Type="Godot.Modding.Patching.AttributeSetPatch">
+    <Attribute>modloaded</Attribute>
+    <Value>miss</Value>
+  </Failure>
+</Godot.Modding.Patching.ConditionalPatch>

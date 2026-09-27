@@ -104,9 +104,41 @@ fixtures/
 | ④b | `LoadData`（`Data/*.xml`） | 全部加载类场景 |
 | ④c | `LoadPatches`（**惰性**） | `patches`、`cross-patch`、`bad-patch`（失败路径） |
 | ④d | `LoadAssemblies`（**即时** + 脚本表注册） | `alpha`、`pack` |
+| ④e | `DirectoryExtensions`（建目录/复制/列举，跨根） | `directories` |
 | ⑤ | 补丁应用（对**所有已加载** mod 的根节点） | `patches`、`cross-patch`、`single-load` |
 | ⑥ | `StartupMod`：反射调用 `[ModStartup]` | `alpha`、`no-assemblies` |
 | ⑦ | `LoadMod`：单加载旁路 | `single-load` |
+
+## 补丁与条件类型矩阵
+
+`patches` 夹具是"覆盖了哪些类型"的**单一出处** —— 每个类型一个补丁文件，一个场景断言全部可观察效果（输出里 `ATTRS:` 那一行就是全表）。
+
+| 补丁类型 | 载体 | 可观察效果 |
+|---|---|---|
+| `AttributeSetPatch` | `SetAttr.xml` | `mark="set"` |
+| `AttributeRemovePatch` | `RemoveTemp.xml`（配 `TargetedPatch`） | `Item` 上的 `temp` 消失 |
+| `NodeAddPatch` | `Mods/AlphaMod/Patches/Boost.xml` | `Boosted` 出现在数据根 |
+| `NodeRemovePatch` | `RemoveZ.xml`（配 `TargetedPatch`） | `//Item[@id='z']` 消失。**该类型无成员**，裸用会把数据根删掉、带走整个文档 |
+| `NodeReplacePatch` | ⚠️ **无载体** —— 见缺陷表第 6 行，它对任何实际用法都抛异常 | — |
+| `TargetedPatch` | `RemoveTemp.xml` / `RemoveZ.xml` 的外层 | 让补丁只作用于 XPath 命中的节点 |
+| `ConditionalPatch` | `CondSuccess.xml` / `CondFailure.xml` | 两个分支各命中一次 |
+| `LogPatch` | `LogIt.xml` | 被包裹补丁的效果（`logged="yes"`）—— 断言的是**效果**，不是日志；只断言日志会把"包装器吞掉内部补丁"放过去 |
+| `MultiPatch` | `Multi.xml` | 两个补丁写同一属性 → 存活者钉住**应用顺序**（`multi="two"`） |
+
+| 条件类型 | 载体 | 可观察效果 |
+|---|---|---|
+| `NodeExistsCondition` | `CondSuccess.xml` / `CondFailure.xml` | 存在与不存在各一次 |
+| `AndCondition` | `CondAnd.xml` | 一真一假 → **失败**分支（`all="miss"`） |
+| `OrCondition` | `CondOr.xml` | **同样的真值对** → **成功**分支（`any="hit"`） |
+| `NotCondition` | `CondNot.xml` | 包裹一个失败条件 → 成功（`neg="hit"`） |
+| `ModLoadedCondition` | `CondModLoaded.xml`（自身 id）+ `CondNot.xml`（不存在的 id） | 肯定与否定两个分支都覆盖 |
+
+**两处刻意的设计**：
+
+1. `And` 与 `Or` 用**同一对真值**、只期望相反结果 —— 单个夹具无法区分"实现了 And"与"实现了 Or"，成对才有判别力
+2. `ModLoadedCondition` 用**该 mod 自己的 id** 断言肯定分支 —— `LoadMods` 在跑补丁**之前**就把 mod 注册进 `LoadedMods`，所以"mod 能看见自己"是真实语义（也正是修 `LoadMod` 重复应用时守住的那条顺序）
+
+**一处待观察的不一致**：`OrCondition.Conditions` **没有** `[Serialize]`，而 `AndCondition.Conditions` 有。按现有序列化行为（"有 private setter 的 public 属性照样能反序列化"，见下文 `Dependencies` 等四处同源现象）它仍能工作 —— 实测 `any="hit"` 就是证据。但这是同族不一致，将来若有人"顺手统一"给属性加/去 `[Serialize]`，值得连它一起处理。
 
 ## 缺陷（由扩覆盖实测抓到）
 
@@ -119,6 +151,7 @@ fixtures/
 | 3 | `LoadPatches` 不包 `SerializationException`，异常契约不一致 | `bad-patch` 曾抛 `SerializationException` | ✅ **已修复** —— 按 `Metadata.Load` 的同一形状兜底；现在抛 `ModLoadException` |
 | 4 | `Before`/`After` 语义与文档注释相反 | `order`/`order-before` 的 `INPUT`/`ORDER` 对比 | ✅ **已修复** —— `SortModMetadata` 建的是"后继"图，而 `TopologicalSort` 的 `dependencies` 参数要求的是"前驱"；交换两条边即符合文档 |
 | 5 | 同进程**第二次** `LoadMods` 抛未处理的 `ArgumentException`（重复键） | `reload` 场景曾输出 `RELOAD-SECOND-THREW:ArgumentException` | ✅ **已修复**（`fix-duplicate-id-on-reload`）—— 查重现在同时看 `ModLoader.LoadedMods`，跨调用重复走既有的"记录 `Duplicate ID` 并跳过"路径；现为 `RELOAD-SECOND:threw=none mods=0` |
+| 6 | **`NodeReplacePatch` 对任何实际用法都抛异常** | 给 `patches` 场景加该类型后实测：`ArgumentException: The node to be inserted is from a different document context` | ⏳ **待处理**（本轮扩覆盖新查出）—— `Replacement` 是**补丁文件那个文档**里的节点，却被直接 `InsertAfter`/`PrependChild` 进**数据文档**；`XmlNode` 拒绝跨文档插入。`NodeAddPatch` 能用说明它追加前做了导入，`NodeReplacePatch` 漏了这一步。**也就是说这个补丁类型从未工作过**，而补丁文件与 mod 数据永远是不同文档 —— 没有任何用法能绕开 |
 
 **缺陷 4 的根因值得记住**：`SortModMetadata` 的图按其注释是"在元素**之后**加载的节点"，而 `TopologicalSort` 的选择器语义是"**先于**元素加载的节点"（它先递归访问依赖，才把元素入列）。两者相反 —— 所以这不是"两边写反了"，而是**图的约定与排序器参数的约定不一致**。
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The third patch-failure shape, and the only one that reaches Mod.LoadPatches' own check:
+
+    serializer.Deserialize(...) as IPatch ?? throw new ModLoadException(dir, $"Invalid patch at {path}")
+
+  - bad-patch names a type that does not exist, and bad-patch-type names one whose deserialization fails.
+    Both land in the catch that wraps whatever the serializer threw, so their message is the wrapped form.
+  - This one names a type that deserializes cleanly and simply is not an IPatch, so it falls through the null
+    check instead - which is why the runner asserts on "Invalid patch at".
+
+  The type is a condition rather than a patch, and one the patches fixture already deserializes as a nested
+  member, so a failure here cannot be blamed on the XML shape. A first attempt used Vector2 and produced the
+  wrapped message instead, meaning it never deserialized at all; the assertion naming the message is what
+  told those two apart.
+-->
+<Godot.Modding.Patching.Conditions.NodeExistsCondition>
+  <XPath>Items</XPath>
+</Godot.Modding.Patching.Conditions.NodeExistsCondition>

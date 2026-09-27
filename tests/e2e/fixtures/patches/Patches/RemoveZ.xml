@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NodeRemovePatch carries no members - it removes whatever it is applied to - so it only makes sense behind a
+  target. Applied bare it would try to remove a data root and take the whole document with it.
+-->
+<Godot.Modding.Patching.TargetedPatch>
+  <Targets>//Item[@id='z']</Targets>
+  <Patch Type="Godot.Modding.Patching.NodeRemovePatch"/>
+</Godot.Modding.Patching.TargetedPatch>

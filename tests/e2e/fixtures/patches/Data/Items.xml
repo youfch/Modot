@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Items>
   <Item id="x" temp="1"/>
+  <Item id="y"/>
+  <Item id="z"/>
 </Items>

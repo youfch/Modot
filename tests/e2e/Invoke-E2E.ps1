@@ -78,9 +78,14 @@ $scenarios = @(
     @{ Name = 'broken-pack'; Dirs = @((Join-Path $failuresDir 'broken-pack')); ExpectFailure = $true },
     @{ Name = 'bad-patch'; Dirs = @((Join-Path $failuresDir 'bad-patch')); ExpectFailure = $true },
     @{ Name = 'bad-patch-type'; Dirs = @((Join-Path $failuresDir 'bad-patch-type')); ExpectFailure = $true },
+    # The third patch-failure shape: the type deserializes and simply is not an IPatch. ExpectOutput pins
+    # which branch of Mod.LoadPatches produced the failure, which the wrapped branch cannot.
+    @{ Name = 'bad-patch-kind'; Dirs = @((Join-Path $failuresDir 'bad-patch-kind')); ExpectFailure = $true; ExpectOutput = 'Invalid patch at' }
     # The same mod loaded twice in one process: measures what the second load does to the first load's data.
     # ExpectOutput asserts the reason, which lives in the log rather than in the return value.
-    @{ Name = 'reload'; Dirs = @($modDir); ExpectOutput = 'Duplicate ID' }
+    @{ Name = 'reload'; Dirs = @($modDir); ExpectOutput = 'Duplicate ID' },
+    # Crosses two filesystem roots, which no fixture can do; ignores its directory argument.
+    @{ Name = 'directories'; Dirs = @($modDir) }
 )
 
 if ($Scenario) {

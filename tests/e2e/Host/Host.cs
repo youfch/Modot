@@ -99,12 +99,16 @@ public partial class Host : Node3D
                 case "reload":
                     this.RunReload(modDirectories);
                     break;
+                case "directories":
+                    this.RunDirectories(modDirectories);
+                    break;
                 // These two cannot finish loading: one ships a resource pack that is not a pack, the other a
                 // patch document that is not a patch. LoadMods must throw rather than quietly return a shorter
                 // sequence, and Invoke-E2E.ps1 expects the nonzero exit code that follows.
                 case "broken-pack":
                 case "bad-patch":
                 case "bad-patch-type":
+                case "bad-patch-kind":
                     this.RunExpectLoaded(modDirectories, 0);
                     break;
                 case "patches":
